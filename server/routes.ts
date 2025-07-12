@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertUserSchema, insertProfileSchema, insertMatchSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
+import MemoryStore from "memorystore";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -49,9 +50,15 @@ declare module 'express-session' {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Create memory store for sessions
+  const MemStore = MemoryStore(session);
+
   // Session configuration
   app.use(session({
     secret: process.env.SESSION_SECRET || 'ghotokbari-secret-key',
+    store: new MemStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    }),
     resave: false,
     saveUninitialized: false,
     cookie: {
@@ -65,9 +72,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
+    console.log('Auth check - Session ID:', req.sessionID);
+    console.log('Auth check - User ID:', req.session.userId);
+    console.log('Auth check - Session data:', req.session);
+    
     if (!req.session.userId) {
+      console.log('Authentication failed - no userId in session');
       return res.status(401).json({ message: 'Authentication required' });
     }
+    console.log('Authentication successful for user:', req.session.userId);
     next();
   };
 

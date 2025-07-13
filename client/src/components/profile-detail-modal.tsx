@@ -14,6 +14,20 @@ interface ProfileDetailModalProps {
 export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: ProfileDetailModalProps) {
   if (!profile || !profile.id) return null;
 
+  // Debug: Log profile data to track what's being passed
+  console.log("ProfileDetailModal - Profile data:", {
+    id: profile.id,
+    name: profile.name,
+    age: profile.age,
+    gender: profile.gender,
+    profession: profile.profession,
+    qualification: profile.qualification,
+    height: profile.height,
+    birthYear: profile.birthYear,
+    hasDocument: !!profile.document,
+    hasProfilePicture: !!profile.profilePicture
+  });
+
   const handleDownload = () => {
     try {
       if (profile?.document && onDownload) {
@@ -120,9 +134,21 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                   </div>
                   <div>
                     <span className="text-xs text-blue-600 font-medium">Height</span>
-                    <p className="text-lg font-bold text-gray-800">{profile.height}</p>
+                    <p className="text-lg font-bold text-gray-800">{profile.height || "Not provided"}</p>
                   </div>
                 </div>
+
+                {profile.birthYear && (
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100/80 rounded-lg">
+                      <Calendar className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-blue-600 font-medium">Birth Year</span>
+                      <p className="text-lg font-bold text-gray-800">{profile.birthYear}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -130,42 +156,25 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
             <div className="group bg-gradient-to-br from-purple-50/80 to-pink-50/80 backdrop-blur-sm rounded-xl p-4 shadow-md border border-purple-100/50 hover:shadow-lg transition-all duration-300">
               <h3 className="text-sm font-semibold text-purple-700 mb-3 uppercase tracking-wide">Professional</h3>
               <div className="space-y-3">
-                {profile.profession && (
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100/80 rounded-lg">
-                      <Briefcase className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-purple-600 font-medium">Profession</span>
-                      <p className="text-lg font-bold text-gray-800">{profile.profession}</p>
-                    </div>
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100/80 rounded-lg">
+                    <Briefcase className="w-4 h-4 text-purple-600" />
                   </div>
-                )}
+                  <div>
+                    <span className="text-xs text-purple-600 font-medium">Profession</span>
+                    <p className="text-lg font-bold text-gray-800">{profile.profession || "Not provided"}</p>
+                  </div>
+                </div>
                 
-                {profile.qualification && (
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100/80 rounded-lg">
-                      <GraduationCap className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-purple-600 font-medium">Qualification</span>
-                      <p className="text-lg font-bold text-gray-800">{profile.qualification}</p>
-                    </div>
+                <div className="flex items-center space-x-3">
+                  <div className="p-2 bg-purple-100/80 rounded-lg">
+                    <GraduationCap className="w-4 h-4 text-purple-600" />
                   </div>
-                )}
-
-                {/* If no professional info, show placeholder */}
-                {!profile.profession && !profile.qualification && (
-                  <div className="flex items-center space-x-3">
-                    <div className="p-2 bg-purple-100/80 rounded-lg">
-                      <Briefcase className="w-4 h-4 text-purple-600" />
-                    </div>
-                    <div>
-                      <span className="text-xs text-purple-600 font-medium">Professional Info</span>
-                      <p className="text-sm text-gray-500">Not specified</p>
-                    </div>
+                  <div>
+                    <span className="text-xs text-purple-600 font-medium">Qualification</span>
+                    <p className="text-lg font-bold text-gray-800">{profile.qualification || "Not provided"}</p>
                   </div>
-                )}
+                </div>
               </div>
             </div>
           </div>

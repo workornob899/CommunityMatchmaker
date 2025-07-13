@@ -55,7 +55,7 @@ export default function Dashboard() {
     newPassword: "",
     confirmPassword: "",
   });
-  
+
   const [customOption, setCustomOption] = useState({
     fieldType: "profession",
     value: "",
@@ -64,7 +64,7 @@ export default function Dashboard() {
   const { user, updateEmail, updatePassword, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Dynamic options state
   const [dynamicOptions, setDynamicOptions] = useState({
     profession: PROFESSION_OPTIONS,
@@ -74,7 +74,7 @@ export default function Dashboard() {
     age: AGE_OPTIONS,
     birthYear: BIRTH_YEAR_OPTIONS,
   });
-  
+
   // Function to refresh dynamic options
   const refreshDynamicOptions = async () => {
     try {
@@ -86,7 +86,7 @@ export default function Dashboard() {
         getCombinedOptions('age'),
         getCombinedOptions('birthYear'),
       ]);
-      
+
       // Ensure all options are arrays and have valid values
       setDynamicOptions({
         profession: Array.isArray(professionOptions) ? professionOptions : PROFESSION_OPTIONS,
@@ -174,6 +174,7 @@ export default function Dashboard() {
         age: "",
         gender: "",
         profession: "",
+        qualification: "",
         height: "",
         birthYear: "",
       });
@@ -262,19 +263,19 @@ export default function Dashboard() {
   const handleAddProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
-    
+
     Object.entries(newProfile).forEach(([key, value]) => {
       if (value) formData.append(key, value);
     });
-    
+
     if (profilePicture) {
       formData.append("profilePicture", profilePicture);
     }
-    
+
     if (document) {
       formData.append("document", document);
     }
-    
+
     addProfileMutation.mutate(formData);
   };
 
@@ -288,14 +289,14 @@ export default function Dashboard() {
         const response = await fetch(`/api/profiles/${profile.id}/download-document`, {
           credentials: "include",
         });
-        
+
         if (!response.ok) {
           throw new Error(`Download failed: ${response.status} ${response.statusText}`);
         }
-        
+
         const blob = await response.blob();
         const filename = `${profile.name}_document.pdf`;
-        
+
         const downloadBlob = (blob: Blob, filename: string) => {
           try {
             const url = window.URL.createObjectURL(blob);
@@ -306,26 +307,26 @@ export default function Dashboard() {
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
-            
+
             setTimeout(() => {
               window.URL.revokeObjectURL(url);
             }, 100);
-            
+
             return true;
           } catch (error) {
             console.error("Download failed:", error);
             return false;
           }
         };
-        
+
         const downloadSuccess = downloadBlob(blob, filename);
-        
+
         if (!downloadSuccess) {
           console.log("Trying direct URL navigation fallback");
           const directUrl = `/api/profiles/${profile.id}/download-document`;
           window.location.href = directUrl;
         }
-        
+
         toast({
           title: "Download Started",
           description: `Downloading ${filename}`,
@@ -430,7 +431,7 @@ export default function Dashboard() {
   };
 
   const displayedProfiles = Object.values(searchFilters).some(value => value && value !== "all" && value !== "") ? searchResults : profiles;
-  
+
   // Error handling
   const hasError = profilesError || statsError || searchError;
   const errorMessage = hasError ? "Failed to load data. Please try refreshing the page." : null;
@@ -456,7 +457,7 @@ export default function Dashboard() {
               <p className="text-sm text-gray-600">Only use company staff</p>
             </div>
           </div>
-          
+
           <div className="flex items-center space-x-4">
             <Button
               onClick={() => setShowAddProfile(true)}
@@ -641,7 +642,7 @@ export default function Dashboard() {
                           className="w-full"
                         />
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Gender</Label>
                         <Select
@@ -663,7 +664,7 @@ export default function Dashboard() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Profession</Label>
                         <Select
@@ -685,7 +686,7 @@ export default function Dashboard() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Birth Year</Label>
                         <Select
@@ -707,7 +708,7 @@ export default function Dashboard() {
                           </SelectContent>
                         </Select>
                       </div>
-                      
+
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Age</Label>
                         <Select
@@ -730,7 +731,7 @@ export default function Dashboard() {
                         </Select>
                       </div>
                     </div>
-                    
+
                     <div className="mt-6 flex items-center justify-between">
                       <Button 
                         onClick={handleSearch} 
@@ -740,7 +741,7 @@ export default function Dashboard() {
                         <Search className="w-4 h-4 mr-2" />
                         {searchLoading ? "Searching..." : "Search Profiles"}
                       </Button>
-                      
+
                       <Button
                         variant="outline"
                         onClick={() => {
@@ -818,7 +819,7 @@ export default function Dashboard() {
             {activeSection === "settings" && (
               <div className="max-w-2xl">
                 <h2 className="text-2xl font-bold text-gray-800 mb-8">Account Settings</h2>
-                
+
                 <Card className="card-shadow">
                   <CardContent className="p-8">
                     <Tabs defaultValue="email" className="space-y-8">
@@ -827,7 +828,7 @@ export default function Dashboard() {
                         <TabsTrigger value="password">Password Settings</TabsTrigger>
                         <TabsTrigger value="manual-add">Manual Add</TabsTrigger>
                       </TabsList>
-                      
+
                       <TabsContent value="email" className="space-y-4">
                         <div className="space-y-4">
                           <div className="space-y-2">
@@ -839,7 +840,7 @@ export default function Dashboard() {
                               className="bg-gray-50"
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label>New Email</Label>
                             <Input
@@ -851,7 +852,7 @@ export default function Dashboard() {
                               }
                             />
                           </div>
-                          
+
                           <Button
                             onClick={handleEmailUpdate}
                             className="btn-primary"
@@ -862,7 +863,7 @@ export default function Dashboard() {
                           </Button>
                         </div>
                       </TabsContent>
-                      
+
                       <TabsContent value="password" className="space-y-4">
                         <div className="space-y-4">
                           <div className="space-y-2">
@@ -876,7 +877,7 @@ export default function Dashboard() {
                               }
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label>New Password</Label>
                             <Input
@@ -888,7 +889,7 @@ export default function Dashboard() {
                               }
                             />
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label>Confirm New Password</Label>
                             <Input
@@ -900,7 +901,7 @@ export default function Dashboard() {
                               }
                             />
                           </div>
-                          
+
                           <Button
                             onClick={handlePasswordUpdate}
                             className="btn-primary"
@@ -911,7 +912,7 @@ export default function Dashboard() {
                           </Button>
                         </div>
                       </TabsContent>
-                      
+
                       <TabsContent value="manual-add" className="space-y-4">
                         <div className="space-y-4">
                           <div className="space-y-2">
@@ -935,7 +936,7 @@ export default function Dashboard() {
                               </SelectContent>
                             </Select>
                           </div>
-                          
+
                           <div className="space-y-2">
                             <Label>Value</Label>
                             <Input
@@ -947,7 +948,7 @@ export default function Dashboard() {
                               }
                             />
                           </div>
-                          
+
                           <Button
                             onClick={handleAddCustomOption}
                             className="btn-primary"
@@ -989,7 +990,7 @@ export default function Dashboard() {
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Age *</Label>
                 <Select
@@ -1010,7 +1011,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Gender *</Label>
                 <Select
@@ -1031,7 +1032,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Profession</Label>
                 <Select
@@ -1052,7 +1053,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Qualification</Label>
                 <Select
@@ -1073,7 +1074,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Birth Year</Label>
                 <Select
@@ -1094,7 +1095,7 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Height</Label>
                 <Select

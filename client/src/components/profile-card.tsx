@@ -6,17 +6,28 @@ import { Profile } from "@shared/schema";
 interface ProfileCardProps {
   profile: Profile;
   onDownload?: (profile: Profile) => void;
+  onClick?: (profile: Profile) => void;
 }
 
-export function ProfileCard({ profile, onDownload }: ProfileCardProps) {
-  const handleDownload = () => {
+export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) {
+  const handleDownload = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click when downloading
     if (profile.document && onDownload) {
       onDownload(profile);
     }
   };
 
+  const handleCardClick = () => {
+    if (onClick) {
+      onClick(profile);
+    }
+  };
+
   return (
-    <Card className="card-shadow animate-fade-in">
+    <Card 
+      className="card-shadow animate-fade-in cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+      onClick={handleCardClick}
+    >
       <CardContent className="p-6">
         <div className="flex space-x-4">
           <div className="w-24 h-24 rounded-full overflow-hidden bg-gray-200 flex-shrink-0">

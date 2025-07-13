@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/sidebar";
 import { ProfileCard } from "@/components/profile-card";
 import { MatchingModal } from "@/components/matching-modal";
+import { ProfileDetailModal } from "@/components/profile-detail-modal";
 import { FileUpload } from "@/components/ui/file-upload";
 import { 
   Menu, Plus, Users, UserCheck, UserX, TrendingUp, Activity, 
@@ -28,6 +29,8 @@ export default function Dashboard() {
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [showMatching, setShowMatching] = useState(false);
   const [matchingType, setMatchingType] = useState<"bride" | "groom">("bride");
+  const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     gender: "",
     profession: "",
@@ -192,6 +195,11 @@ export default function Dashboard() {
     if (profile.document) {
       window.open(profile.document, "_blank");
     }
+  };
+
+  const handleProfileClick = (profile: Profile) => {
+    setSelectedProfile(profile);
+    setIsProfileModalOpen(true);
   };
 
   const handleEmailUpdate = () => {
@@ -516,6 +524,7 @@ export default function Dashboard() {
                       key={profile.id}
                       profile={profile}
                       onDownload={handleDownload}
+                      onClick={handleProfileClick}
                     />
                   ))}
                 </div>
@@ -788,6 +797,14 @@ export default function Dashboard() {
         isOpen={showMatching}
         onClose={() => setShowMatching(false)}
         type={matchingType}
+      />
+
+      {/* Profile Detail Modal */}
+      <ProfileDetailModal
+        profile={selectedProfile}
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        onDownload={handleDownload}
       />
     </div>
   );

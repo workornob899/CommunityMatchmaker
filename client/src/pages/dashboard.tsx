@@ -72,6 +72,21 @@ export default function Dashboard() {
   const { data: searchResults = [], isLoading: searchLoading } = useQuery({
     queryKey: ["/api/profiles/search", searchFilters],
     enabled: Object.values(searchFilters).some(Boolean),
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      Object.entries(searchFilters).forEach(([key, value]) => {
+        if (value) {
+          params.append(key, value);
+        }
+      });
+      const response = await fetch(`/api/profiles/search?${params}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to search profiles");
+      }
+      return response.json();
+    },
   });
 
   // Mutations
@@ -188,7 +203,9 @@ export default function Dashboard() {
   };
 
   const handleSearch = () => {
+    // Force refetch of search results
     queryClient.invalidateQueries({ queryKey: ["/api/profiles/search", searchFilters] });
+    queryClient.refetchQueries({ queryKey: ["/api/profiles/search", searchFilters] });
   };
 
   const handleDownload = (profile: Profile) => {
@@ -421,34 +438,38 @@ export default function Dashboard() {
               {/* Filter Panel */}
               <Card className="card-shadow">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-gray-800">Filter Profiles</CardTitle>
+                  <CardTitle className="text-2xl text-gray-800 flex items-center">
+                    <Search className="w-6 h-6 mr-2" />
+                    Filter Profiles
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
                     <div className="space-y-2">
-                      <Label>Date</Label>
+                      <Label className="text-sm font-medium text-gray-700">Date</Label>
                       <Input
                         type="date"
                         value={searchFilters.date}
                         onChange={(e) =>
                           setSearchFilters({ ...searchFilters, date: e.target.value })
                         }
+                        className="w-full"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Gender</Label>
+                      <Label className="text-sm font-medium text-gray-700">Gender</Label>
                       <Select
                         value={searchFilters.gender}
                         onValueChange={(value) =>
                           setSearchFilters({ ...searchFilters, gender: value })
                         }
                       >
-                        <SelectTrigger>
-                          <SelectValue placeholder="All" />
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="All Genders" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All</SelectItem>
+                          <SelectItem value="">All Genders</SelectItem>
                           <SelectItem value="Male">Male</SelectItem>
                           <SelectItem value="Female">Female</SelectItem>
                         </SelectContent>
@@ -456,56 +477,96 @@ export default function Dashboard() {
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Profession</Label>
+                      <Label className="text-sm font-medium text-gray-700">Profession</Label>
                       <Input
                         placeholder="Enter profession"
                         value={searchFilters.profession}
                         onChange={(e) =>
                           setSearchFilters({ ...searchFilters, profession: e.target.value })
                         }
+                        className="w-full"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Birth Year</Label>
+                      <Label className="text-sm font-medium text-gray-700">Birth Year</Label>
                       <Input
                         type="number"
-                        placeholder="YYYY"
+                        placeholder="e.g. 1990"
+                        min="1940"
+                        max="2010"
                         value={searchFilters.birthYear}
                         onChange={(e) =>
                           setSearchFilters({ ...searchFilters, birthYear: e.target.value })
                         }
+                        className="w-full"
                       />
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Height</Label>
-                      <Input
-                        placeholder="5'6&quot;"
+                      <Label className="text-sm font-medium text-gray-700">Height</Label>
+                      <Select
                         value={searchFilters.height}
-                        onChange={(e) =>
-                          setSearchFilters({ ...searchFilters, height: e.target.value })
+                        onValueChange={(value) =>
+                          setSearchFilters({ ...searchFilters, height: value })
                         }
-                      />
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Any Height" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Any Height</SelectItem>
+                          {HEIGHT_OPTIONS.map((height) => (
+                            <SelectItem key={height} value={height}>
+                              {height}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     
                     <div className="space-y-2">
-                      <Label>Age</Label>
+                      <Label className="text-sm font-medium text-gray-700">Age</Label>
                       <Input
                         type="number"
-                        placeholder="25"
+                        placeholder="e.g. 25"
+                        min="18"
+                        max="80"
                         value={searchFilters.age}
                         onChange={(e) =>
                           setSearchFilters({ ...searchFilters, age: e.target.value })
                         }
+                        className="w-full"
                       />
                     </div>
                   </div>
                   
-                  <div className="mt-6">
-                    <Button onClick={handleSearch} className="btn-primary" disabled={searchLoading}>
+                  <div className="mt-6 flex items-center justify-between">
+                    <Button 
+                      onClick={handleSearch} 
+                      className="btn-primary px-6 py-2" 
+                      disabled={searchLoading}
+                    >
                       <Search className="w-4 h-4 mr-2" />
                       {searchLoading ? "Searching..." : "Search Profiles"}
+                    </Button>
+                    
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setSearchFilters({
+                          gender: "",
+                          profession: "",
+                          birthYear: "",
+                          height: "",
+                          age: "",
+                          date: "",
+                        });
+                        queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+                      }}
+                      className="px-4 py-2"
+                    >
+                      Clear Filters
                     </Button>
                   </div>
                 </CardContent>

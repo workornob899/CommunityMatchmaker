@@ -35,7 +35,6 @@ export default function Dashboard() {
     gender: "all",
     profession: "",
     birthYear: "",
-    height: "all",
     age: "",
     date: "",
   });
@@ -714,7 +713,7 @@ export default function Dashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Date</Label>
                       <Input
@@ -776,27 +775,7 @@ export default function Dashboard() {
                       />
                     </div>
                     
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">Height</Label>
-                      <Select
-                        value={searchFilters.height}
-                        onValueChange={(value) =>
-                          setSearchFilters({ ...searchFilters, height: value })
-                        }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Any Height" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Any Height</SelectItem>
-                          {dynamicOptions.height.map((height) => (
-                            <SelectItem key={height} value={height}>
-                              {height}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                    
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Age</Label>
@@ -831,7 +810,6 @@ export default function Dashboard() {
                           gender: "all",
                           profession: "",
                           birthYear: "",
-                          height: "all",
                           age: "",
                           date: "",
                         });

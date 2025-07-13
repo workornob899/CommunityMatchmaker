@@ -68,6 +68,12 @@ export const HEIGHT_OPTIONS = [
   "6'5\"",
 ];
 
+// Generate age options from 18 to 80
+export const AGE_OPTIONS = Array.from({ length: 63 }, (_, i) => (i + 18).toString());
+
+// Generate birth year options from 1950 to 2090
+export const BIRTH_YEAR_OPTIONS = Array.from({ length: 141 }, (_, i) => (1950 + i).toString());
+
 // Dynamic options fetching function
 export const fetchCustomOptions = async (fieldType: string) => {
   try {
@@ -96,6 +102,10 @@ export const getCombinedOptions = async (fieldType: string) => {
       return [...HEIGHT_OPTIONS, ...customOptions];
     case 'gender':
       return [GENDERS.MALE, GENDERS.FEMALE, ...customOptions];
+    case 'age':
+      return [...AGE_OPTIONS, ...customOptions];
+    case 'birthYear':
+      return [...BIRTH_YEAR_OPTIONS, ...customOptions];
     default:
       return customOptions;
   }

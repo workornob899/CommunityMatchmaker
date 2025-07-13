@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, HEIGHT_OPTIONS, GENDERS, getCombinedOptions } from "@/lib/constants";
+import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, HEIGHT_OPTIONS, GENDERS, AGE_OPTIONS, BIRTH_YEAR_OPTIONS, getCombinedOptions } from "@/lib/constants";
 import { Profile } from "@shared/schema";
 
 export default function Dashboard() {
@@ -71,16 +71,20 @@ export default function Dashboard() {
     qualification: QUALIFICATION_OPTIONS,
     height: HEIGHT_OPTIONS,
     gender: [GENDERS.MALE, GENDERS.FEMALE],
+    age: AGE_OPTIONS,
+    birthYear: BIRTH_YEAR_OPTIONS,
   });
   
   // Function to refresh dynamic options
   const refreshDynamicOptions = async () => {
     try {
-      const [professionOptions, qualificationOptions, heightOptions, genderOptions] = await Promise.all([
+      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions, birthYearOptions] = await Promise.all([
         getCombinedOptions('profession'),
         getCombinedOptions('qualification'),
         getCombinedOptions('height'),
         getCombinedOptions('gender'),
+        getCombinedOptions('age'),
+        getCombinedOptions('birthYear'),
       ]);
       
       setDynamicOptions({
@@ -88,6 +92,8 @@ export default function Dashboard() {
         qualification: qualificationOptions,
         height: heightOptions,
         gender: genderOptions,
+        age: ageOptions,
+        birthYear: birthYearOptions,
       });
     } catch (error) {
       console.error('Error refreshing dynamic options:', error);
@@ -650,44 +656,68 @@ export default function Dashboard() {
                       
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Profession</Label>
-                        <Input
-                          placeholder="Enter profession"
+                        <Select
                           value={searchFilters.profession}
-                          onChange={(e) =>
-                            setSearchFilters({ ...searchFilters, profession: e.target.value })
+                          onValueChange={(value) =>
+                            setSearchFilters({ ...searchFilters, profession: value })
                           }
-                          className="w-full"
-                        />
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Profession" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">All Professions</SelectItem>
+                            {dynamicOptions.profession.map((profession) => (
+                              <SelectItem key={profession} value={profession}>
+                                {profession}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Birth Year</Label>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 1990"
-                          min="1940"
-                          max="2010"
+                        <Select
                           value={searchFilters.birthYear}
-                          onChange={(e) =>
-                            setSearchFilters({ ...searchFilters, birthYear: e.target.value })
+                          onValueChange={(value) =>
+                            setSearchFilters({ ...searchFilters, birthYear: value })
                           }
-                          className="w-full"
-                        />
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Birth Year" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">All Birth Years</SelectItem>
+                            {dynamicOptions.birthYear.map((year) => (
+                              <SelectItem key={year} value={year}>
+                                {year}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                       
                       <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Age</Label>
-                        <Input
-                          type="number"
-                          placeholder="e.g. 25"
-                          min="18"
-                          max="80"
+                        <Select
                           value={searchFilters.age}
-                          onChange={(e) =>
-                            setSearchFilters({ ...searchFilters, age: e.target.value })
+                          onValueChange={(value) =>
+                            setSearchFilters({ ...searchFilters, age: value })
                           }
-                          className="w-full"
-                        />
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Age" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="">All Ages</SelectItem>
+                            {dynamicOptions.age.map((age) => (
+                              <SelectItem key={age} value={age}>
+                                {age}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
                     </div>
                     
@@ -890,6 +920,8 @@ export default function Dashboard() {
                                 <SelectItem value="qualification">Qualification</SelectItem>
                                 <SelectItem value="height">Height</SelectItem>
                                 <SelectItem value="gender">Gender</SelectItem>
+                                <SelectItem value="age">Age</SelectItem>
+                                <SelectItem value="birthYear">Birth Year</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -950,17 +982,23 @@ export default function Dashboard() {
               
               <div className="space-y-2">
                 <Label>Age *</Label>
-                <Input
-                  type="number"
-                  placeholder="Age"
-                  min="18"
-                  max="80"
+                <Select
                   value={newProfile.age}
-                  onChange={(e) =>
-                    setNewProfile({ ...newProfile, age: e.target.value })
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, age: value })
                   }
-                  required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Age" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dynamicOptions.age.map((age) => (
+                      <SelectItem key={age} value={age}>
+                        {age}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">
@@ -1028,16 +1066,23 @@ export default function Dashboard() {
               
               <div className="space-y-2">
                 <Label>Birth Year</Label>
-                <Input
-                  type="number"
-                  placeholder="Birth Year"
-                  min="1940"
-                  max="2010"
+                <Select
                   value={newProfile.birthYear}
-                  onChange={(e) =>
-                    setNewProfile({ ...newProfile, birthYear: e.target.value })
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, birthYear: value })
                   }
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Birth Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dynamicOptions.birthYear.map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">

@@ -79,6 +79,9 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
           {/* Profile Information */}
           <div className="space-y-8">
             <div className="text-center">
+              <p className="text-sm text-gray-500 font-mono mb-2">
+                {profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}
+              </p>
               <h2 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent animate-fade-in">
                 {profile.name}
               </h2>
@@ -129,6 +132,18 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                       <div>
                         <span className="text-sm text-purple-600 font-semibold uppercase tracking-wide">Profession</span>
                         <p className="text-2xl font-bold text-gray-800">{profile.profession}</p>
+                      </div>
+                    </div>
+                  )}
+                  
+                  {profile.qualification && (
+                    <div className="flex items-center space-x-5">
+                      <div className="p-4 bg-purple-100/80 rounded-full shadow-md group-hover:shadow-lg transition-shadow duration-300">
+                        <Briefcase className="w-7 h-7 text-purple-600" />
+                      </div>
+                      <div>
+                        <span className="text-sm text-purple-600 font-semibold uppercase tracking-wide">Qualification</span>
+                        <p className="text-2xl font-bold text-gray-800">{profile.qualification}</p>
                       </div>
                     </div>
                   )}

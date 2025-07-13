@@ -61,6 +61,11 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
           
           {/* Right Side - Details */}
           <div className="flex-1 p-5 relative bg-gradient-to-br from-white to-gray-50">
+            <div className="mb-2">
+              <p className="text-xs text-gray-500 font-mono">
+                {profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}
+              </p>
+            </div>
             <h3 className="text-xl font-bold text-gray-800 mb-4 truncate group-hover:text-blue-600 transition-colors duration-300">
               {profile.name}
             </h3>
@@ -84,6 +89,13 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
                 <div className="flex items-center">
                   <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
                   <span className="truncate font-medium">{profile.profession}</span>
+                </div>
+              )}
+              
+              {profile.qualification && (
+                <div className="flex items-center">
+                  <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
+                  <span className="truncate font-medium">{profile.qualification}</span>
                 </div>
               )}
               

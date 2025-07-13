@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertUserSchema, insertProfileSchema, insertMatchSchema } from "@shared/schema";
+import { insertUserSchema, insertProfileSchema, insertMatchSchema, insertCustomOptionSchema } from "@shared/schema";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
@@ -225,6 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         age: parseInt(req.body.age),
         gender: req.body.gender,
         profession: req.body.profession || null,
+        qualification: req.body.qualification || null,
         height: req.body.height,
         birthYear: parseInt(req.body.birthYear),
         profilePicture: null as string | null,
@@ -355,6 +356,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
     } catch (error) {
       res.status(500).json({ message: 'Failed to update password' });
+    }
+  });
+
+  // Custom options routes
+  app.get('/api/custom-options/:fieldType', requireAuth, async (req, res) => {
+    try {
+      const { fieldType } = req.params;
+      const options = await storage.getCustomOptions(fieldType);
+      res.json(options);
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to fetch custom options' });
+    }
+  });
+
+  app.post('/api/custom-options', requireAuth, async (req, res) => {
+    try {
+      const validatedData = insertCustomOptionSchema.parse(req.body);
+      const option = await storage.createCustomOption(validatedData);
+      res.status(201).json(option);
+    } catch (error) {
+      console.error('Custom option creation error:', error);
+      res.status(400).json({ message: 'Failed to create custom option' });
+    }
+  });
+
+  app.delete('/api/custom-options/:id', requireAuth, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const deleted = await storage.deleteCustomOption(parseInt(id));
+      if (deleted) {
+        res.json({ message: 'Custom option deleted successfully' });
+      } else {
+        res.status(404).json({ message: 'Custom option not found' });
+      }
+    } catch (error) {
+      res.status(500).json({ message: 'Failed to delete custom option' });
     }
   });
 

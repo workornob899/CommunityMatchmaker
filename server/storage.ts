@@ -1,4 +1,4 @@
-import { users, profiles, matches, type User, type InsertUser, type Profile, type InsertProfile, type Match, type InsertMatch } from "@shared/schema";
+import { users, profiles, matches, customOptions, type User, type InsertUser, type Profile, type InsertProfile, type Match, type InsertMatch, type CustomOption, type InsertCustomOption } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
 
@@ -37,6 +37,11 @@ export interface IStorage {
     brideProfiles: number;
     groomProfiles: number;
   }>;
+
+  // Custom options methods
+  getCustomOptions(fieldType: string): Promise<CustomOption[]>;
+  createCustomOption(option: InsertCustomOption): Promise<CustomOption>;
+  deleteCustomOption(id: number): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -86,14 +91,41 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProfile(profile: InsertProfile): Promise<Profile> {
+    // Generate unique profile ID
+    const profileId = await this.generateUniqueProfileId();
+    
     const [newProfile] = await db
       .insert(profiles)
       .values({
         ...profile,
+        profileId,
         updatedAt: new Date(),
       })
       .returning();
     return newProfile;
+  }
+
+  private async generateUniqueProfileId(): Promise<string> {
+    let profileId: string;
+    let isUnique = false;
+    
+    while (!isUnique) {
+      // Generate random 5-digit number
+      const randomNumber = Math.floor(10000 + Math.random() * 90000);
+      profileId = `GB-${randomNumber}`;
+      
+      // Check if it already exists
+      const [existing] = await db
+        .select()
+        .from(profiles)
+        .where(eq(profiles.profileId, profileId));
+      
+      if (!existing) {
+        isUnique = true;
+      }
+    }
+    
+    return profileId!;
   }
 
   async updateProfile(id: number, profile: Partial<InsertProfile>): Promise<Profile | undefined> {
@@ -222,6 +254,28 @@ export class DatabaseStorage implements IStorage {
       brideProfiles: brideResult[0]?.count || 0,
       groomProfiles: groomResult[0]?.count || 0,
     };
+  }
+
+  // Custom options methods
+  async getCustomOptions(fieldType: string): Promise<CustomOption[]> {
+    return await db
+      .select()
+      .from(customOptions)
+      .where(eq(customOptions.fieldType, fieldType))
+      .orderBy(customOptions.value);
+  }
+
+  async createCustomOption(option: InsertCustomOption): Promise<CustomOption> {
+    const [newOption] = await db
+      .insert(customOptions)
+      .values(option)
+      .returning();
+    return newOption;
+  }
+
+  async deleteCustomOption(id: number): Promise<boolean> {
+    const result = await db.delete(customOptions).where(eq(customOptions.id, id));
+    return (result.rowCount || 0) > 0;
   }
 }
 

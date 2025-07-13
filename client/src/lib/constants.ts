@@ -31,6 +31,20 @@ export const PROFESSION_OPTIONS = [
   "Other",
 ];
 
+export const QUALIFICATION_OPTIONS = [
+  "High School",
+  "Bachelor's Degree",
+  "Master's Degree",
+  "PhD",
+  "Diploma",
+  "Certificate",
+  "MBA",
+  "Engineering Degree",
+  "Medical Degree",
+  "Law Degree",
+  "Other",
+];
+
 export const HEIGHT_OPTIONS = [
   "4'10\"",
   "4'11\"",
@@ -53,3 +67,36 @@ export const HEIGHT_OPTIONS = [
   "6'4\"",
   "6'5\"",
 ];
+
+// Dynamic options fetching function
+export const fetchCustomOptions = async (fieldType: string) => {
+  try {
+    const response = await fetch(`/api/custom-options/${fieldType}`);
+    if (response.ok) {
+      const customOptions = await response.json();
+      return customOptions.map((option: any) => option.value);
+    }
+    return [];
+  } catch (error) {
+    console.error(`Error fetching custom options for ${fieldType}:`, error);
+    return [];
+  }
+};
+
+// Function to get combined options (default + custom)
+export const getCombinedOptions = async (fieldType: string) => {
+  const customOptions = await fetchCustomOptions(fieldType);
+  
+  switch (fieldType) {
+    case 'profession':
+      return [...PROFESSION_OPTIONS, ...customOptions];
+    case 'qualification':
+      return [...QUALIFICATION_OPTIONS, ...customOptions];
+    case 'height':
+      return [...HEIGHT_OPTIONS, ...customOptions];
+    case 'gender':
+      return [GENDERS.MALE, GENDERS.FEMALE, ...customOptions];
+    default:
+      return customOptions;
+  }
+};

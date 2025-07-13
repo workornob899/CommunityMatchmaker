@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,7 +20,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { LOGO_URL, PROFESSION_OPTIONS, HEIGHT_OPTIONS, GENDERS } from "@/lib/constants";
+import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, HEIGHT_OPTIONS, GENDERS, getCombinedOptions } from "@/lib/constants";
 import { Profile } from "@shared/schema";
 
 export default function Dashboard() {
@@ -44,6 +44,7 @@ export default function Dashboard() {
     age: "",
     gender: "",
     profession: "",
+    qualification: "",
     height: "",
     birthYear: "",
   });
@@ -55,10 +56,49 @@ export default function Dashboard() {
     newPassword: "",
     confirmPassword: "",
   });
+  
+  const [customOption, setCustomOption] = useState({
+    fieldType: "profession",
+    value: "",
+  });
 
   const { user, updateEmail, updatePassword, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  
+  // Dynamic options state
+  const [dynamicOptions, setDynamicOptions] = useState({
+    profession: PROFESSION_OPTIONS,
+    qualification: QUALIFICATION_OPTIONS,
+    height: HEIGHT_OPTIONS,
+    gender: [GENDERS.MALE, GENDERS.FEMALE],
+  });
+  
+  // Function to refresh dynamic options
+  const refreshDynamicOptions = async () => {
+    try {
+      const [professionOptions, qualificationOptions, heightOptions, genderOptions] = await Promise.all([
+        getCombinedOptions('profession'),
+        getCombinedOptions('qualification'),
+        getCombinedOptions('height'),
+        getCombinedOptions('gender'),
+      ]);
+      
+      setDynamicOptions({
+        profession: professionOptions,
+        qualification: qualificationOptions,
+        height: heightOptions,
+        gender: genderOptions,
+      });
+    } catch (error) {
+      console.error('Error refreshing dynamic options:', error);
+    }
+  };
+
+  // Load dynamic options on component mount
+  useEffect(() => {
+    refreshDynamicOptions();
+  }, []);
 
   // Queries
   const { data: profiles = [], isLoading: profilesLoading, error: profilesError } = useQuery({
@@ -180,6 +220,33 @@ export default function Dashboard() {
     },
   });
 
+  const addCustomOptionMutation = useMutation({
+    mutationFn: async (option: { fieldType: string; value: string }) => {
+      const response = await apiRequest("/api/custom-options", {
+        method: "POST",
+        body: JSON.stringify(option),
+      });
+      return response;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Custom option added successfully!",
+      });
+      setCustomOption({ ...customOption, value: "" });
+      // Refresh dynamic options and cached data
+      refreshDynamicOptions();
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-options"] });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to add custom option.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddProfile = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -197,6 +264,7 @@ export default function Dashboard() {
     formData.append("age", newProfile.age);
     formData.append("gender", newProfile.gender);
     formData.append("profession", newProfile.profession || "");
+    formData.append("qualification", newProfile.qualification || "");
     formData.append("height", newProfile.height);
     formData.append("birthYear", (new Date().getFullYear() - parseInt(newProfile.age)).toString());
 
@@ -423,6 +491,22 @@ export default function Dashboard() {
     updatePasswordMutation.mutate({
       currentPassword: settings.currentPassword,
       newPassword: settings.newPassword,
+    });
+  };
+
+  const handleAddCustomOption = () => {
+    if (!customOption.value.trim()) {
+      toast({
+        title: "Missing Information",
+        description: "Please enter a value to add.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addCustomOptionMutation.mutate({
+      fieldType: customOption.fieldType,
+      value: customOption.value.trim(),
     });
   };
 
@@ -656,8 +740,11 @@ export default function Dashboard() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">All Genders</SelectItem>
-                          <SelectItem value="Male">Male</SelectItem>
-                          <SelectItem value="Female">Female</SelectItem>
+                          {dynamicOptions.gender.map((gender) => (
+                            <SelectItem key={gender} value={gender}>
+                              {gender}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -702,7 +789,7 @@ export default function Dashboard() {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Any Height</SelectItem>
-                          {HEIGHT_OPTIONS.map((height) => (
+                          {dynamicOptions.height.map((height) => (
                             <SelectItem key={height} value={height}>
                               {height}
                             </SelectItem>
@@ -849,9 +936,10 @@ export default function Dashboard() {
               <Card className="card-shadow">
                 <CardContent className="p-8">
                   <Tabs defaultValue="email" className="space-y-8">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="grid w-full grid-cols-3">
                       <TabsTrigger value="email">Email Settings</TabsTrigger>
                       <TabsTrigger value="password">Password Settings</TabsTrigger>
+                      <TabsTrigger value="manual-add">Manual Add</TabsTrigger>
                     </TabsList>
                     
                     <TabsContent value="email" className="space-y-4">
@@ -937,6 +1025,51 @@ export default function Dashboard() {
                         </Button>
                       </div>
                     </TabsContent>
+                    
+                    <TabsContent value="manual-add" className="space-y-4">
+                      <div className="space-y-4">
+                        <div className="space-y-2">
+                          <Label>Field Type</Label>
+                          <Select
+                            value={customOption.fieldType}
+                            onValueChange={(value) =>
+                              setCustomOption({ ...customOption, fieldType: value })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select field type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="profession">Profession</SelectItem>
+                              <SelectItem value="qualification">Qualification</SelectItem>
+                              <SelectItem value="height">Height</SelectItem>
+                              <SelectItem value="gender">Gender</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <Label>Value</Label>
+                          <Input
+                            type="text"
+                            placeholder="Enter value to add"
+                            value={customOption.value}
+                            onChange={(e) =>
+                              setCustomOption({ ...customOption, value: e.target.value })
+                            }
+                          />
+                        </div>
+                        
+                        <Button
+                          onClick={handleAddCustomOption}
+                          className="btn-primary"
+                          disabled={addCustomOptionMutation.isPending}
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {addCustomOptionMutation.isPending ? "Adding..." : "Add Custom Option"}
+                        </Button>
+                      </div>
+                    </TabsContent>
                   </Tabs>
                 </CardContent>
               </Card>
@@ -995,8 +1128,11 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Gender" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value={GENDERS.MALE}>Male</SelectItem>
-                    <SelectItem value={GENDERS.FEMALE}>Female</SelectItem>
+                    {dynamicOptions.gender.map((gender) => (
+                      <SelectItem key={gender} value={gender}>
+                        {gender}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -1013,9 +1149,30 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Profession" />
                   </SelectTrigger>
                   <SelectContent>
-                    {PROFESSION_OPTIONS.map((profession) => (
+                    {dynamicOptions.profession.map((profession) => (
                       <SelectItem key={profession} value={profession}>
                         {profession}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Qualification</Label>
+                <Select
+                  value={newProfile.qualification}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, qualification: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Qualification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dynamicOptions.qualification.map((qualification) => (
+                      <SelectItem key={qualification} value={qualification}>
+                        {qualification}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1034,7 +1191,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Height" />
                   </SelectTrigger>
                   <SelectContent>
-                    {HEIGHT_OPTIONS.map((height) => (
+                    {dynamicOptions.height.map((height) => (
                       <SelectItem key={height} value={height}>
                         {height}
                       </SelectItem>

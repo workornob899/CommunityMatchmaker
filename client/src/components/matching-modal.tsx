@@ -75,6 +75,16 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
       return;
     }
 
+    // Validate groom profession requirement
+    if (formData.gender === "Male" && !formData.profession) {
+      toast({
+        title: "Profession Required",
+        description: "Groom's profession is mandatory for matching.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const matchingData = {
       name: formData.name,
       age: parseInt(formData.age),
@@ -159,12 +169,15 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="profession">Profession</Label>
+                  <Label htmlFor="profession">
+                    Profession {formData.gender === "Male" ? "*" : ""}
+                  </Label>
                   <Input
                     id="profession"
-                    placeholder="Enter profession"
+                    placeholder={formData.gender === "Male" ? "Enter profession (required)" : "Enter profession (optional)"}
                     value={formData.profession}
                     onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
+                    required={formData.gender === "Male"}
                   />
                 </div>
 

@@ -266,29 +266,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to parse height
+  const parseHeight = (height: string): number => {
+    const match = height.match(/(\d+)'(\d+)"/);
+    if (match) {
+      const feet = parseInt(match[1]);
+      const inches = parseInt(match[2]);
+      return feet * 12 + inches;
+    }
+    return 0;
+  };
+
+  // Store recent matches to avoid repetition
+  let recentMatches: number[] = [];
+  const MAX_RECENT_MATCHES = 3;
+
   // Matching routes
   app.post('/api/match', requireAuth, async (req, res) => {
     try {
       const { name, age, gender, profession, height } = req.body;
       
+      // Validate groom profession requirement
+      if (gender === 'Male' && !profession) {
+        return res.status(400).json({ message: 'Groom profession is mandatory' });
+      }
+      
       // Find opposite gender profiles
       const oppositeGender = gender === 'Male' ? 'Female' : 'Male';
       const candidateProfiles = await storage.getProfilesByGender(oppositeGender);
       
-      // Apply matching logic
+      // Apply exact matching logic
       const compatibleProfiles = candidateProfiles.filter(profile => {
+        const inputHeightInches = parseHeight(height);
+        const candidateHeightInches = parseHeight(profile.height);
+
         if (gender === 'Male') {
-          // Male looking for female: female should be 3-6 years younger and 6-8 inches shorter
+          // Male (Groom) looking for female (Bride)
+          // Bride should be 3-6 years younger and 6-8 inches shorter
           const ageDiff = age - profile.age;
-          const heightDiff = parseFloat(height.replace(/[^\d.]/g, '')) - parseFloat(profile.height.replace(/[^\d.]/g, ''));
+          const heightDiff = inputHeightInches - candidateHeightInches;
           
-          return ageDiff >= 3 && ageDiff <= 6 && heightDiff >= 0.5 && heightDiff <= 0.67; // 6-8 inches ≈ 0.5-0.67 feet
+          return ageDiff >= 3 && ageDiff <= 6 && heightDiff >= 6 && heightDiff <= 8;
         } else {
-          // Female looking for male: male should be 3-6 years older and 6-8 inches taller
+          // Female (Bride) looking for male (Groom)
+          // Groom should be 3-6 years older and 6-8 inches taller
+          // Groom must have profession
+          if (!profile.profession) {
+            return false;
+          }
+
           const ageDiff = profile.age - age;
-          const heightDiff = parseFloat(profile.height.replace(/[^\d.]/g, '')) - parseFloat(height.replace(/[^\d.]/g, ''));
+          const heightDiff = candidateHeightInches - inputHeightInches;
           
-          return ageDiff >= 3 && ageDiff <= 6 && heightDiff >= 0.5 && heightDiff <= 0.67;
+          return ageDiff >= 3 && ageDiff <= 6 && heightDiff >= 6 && heightDiff <= 8;
         }
       });
 
@@ -296,8 +326,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'No compatible matches found' });
       }
 
-      // Select random match from compatible profiles
-      const randomMatch = compatibleProfiles[Math.floor(Math.random() * compatibleProfiles.length)];
+      // Filter out recently matched profiles
+      const availableMatches = compatibleProfiles.filter(profile => 
+        !recentMatches.includes(profile.id)
+      );
+
+      // If all matches are recent, clear the history and use all matches
+      const matchesToUse = availableMatches.length > 0 ? availableMatches : compatibleProfiles;
+
+      if (availableMatches.length === 0) {
+        recentMatches = []; // Reset recent matches
+      }
+
+      // Select random match from available profiles
+      const randomIndex = Math.floor(Math.random() * matchesToUse.length);
+      const randomMatch = matchesToUse[randomIndex];
+
+      // Add to recent matches
+      recentMatches.push(randomMatch.id);
+      if (recentMatches.length > MAX_RECENT_MATCHES) {
+        recentMatches.shift(); // Remove oldest
+      }
       
       // Calculate compatibility score (based on age and height compatibility)
       const compatibilityScore = Math.floor(Math.random() * 15) + 85; // 85-100%

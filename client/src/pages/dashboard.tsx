@@ -779,17 +779,24 @@ export default function Dashboard() {
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Age</Label>
-                      <Input
-                        type="number"
-                        placeholder="e.g. 25"
-                        min="18"
-                        max="80"
+                      <Select
                         value={searchFilters.age}
-                        onChange={(e) =>
-                          setSearchFilters({ ...searchFilters, age: e.target.value })
+                        onValueChange={(value) =>
+                          setSearchFilters({ ...searchFilters, age: value })
                         }
-                        className="w-full"
-                      />
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Any Age" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="">Any Age</SelectItem>
+                          {Array.from({ length: 63 }, (_, i) => i + 18).map((age) => (
+                            <SelectItem key={age} value={age.toString()}>
+                              {age}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                   
@@ -1081,17 +1088,23 @@ export default function Dashboard() {
               
               <div className="space-y-2">
                 <Label>Age *</Label>
-                <Input
-                  type="number"
-                  placeholder="Age"
-                  min="18"
-                  max="80"
+                <Select
                   value={newProfile.age}
-                  onChange={(e) =>
-                    setNewProfile({ ...newProfile, age: e.target.value })
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, age: value })
                   }
-                  required
-                />
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Age" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Array.from({ length: 63 }, (_, i) => i + 18).map((age) => (
+                      <SelectItem key={age} value={age.toString()}>
+                        {age}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               
               <div className="space-y-2">

@@ -4,6 +4,13 @@
 
 This is a full-stack matrimonial matching system for GhotokBari.com.bd, a Bangladesh-based matrimonial platform. The application provides profile management, intelligent matching algorithms, and a comprehensive dashboard for managing matrimonial data.
 
+## Recent Changes (July 13, 2025)
+
+✓ Fixed Manual Add functionality in Settings section - custom options now save correctly
+✓ Resolved Dashboard content alignment issue with proper centering
+✓ Fixed API request parameters order for custom options endpoint
+✓ All sections (Dashboard, Profiles, Settings) working correctly with external Neon database
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.

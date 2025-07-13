@@ -221,14 +221,8 @@ export default function Dashboard() {
 
   const addCustomOptionMutation = useMutation({
     mutationFn: async (option: { fieldType: string; value: string }) => {
-      const response = await apiRequest("/api/custom-options", {
-        method: "POST",
-        body: JSON.stringify(option),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-      return response;
+      const response = await apiRequest("POST", "/api/custom-options", option);
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -236,6 +230,8 @@ export default function Dashboard() {
         description: "Custom option added successfully!",
       });
       setCustomOption({ ...customOption, value: "" });
+      // Invalidate the custom options cache to refresh dropdowns
+      queryClient.invalidateQueries({ queryKey: ["/api/custom-options"] });
       refreshDynamicOptions();
     },
     onError: () => {

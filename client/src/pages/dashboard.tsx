@@ -219,6 +219,20 @@ export default function Dashboard() {
   const handleDownload = async (profile: Profile) => {
     try {
       console.log("Starting download for profile:", profile.id);
+      console.log("Profile document:", profile.document);
+      
+      if (!profile) {
+        throw new Error("Profile is null or undefined");
+      }
+      
+      if (!profile.document) {
+        toast({
+          title: "No Document",
+          description: "This profile doesn't have a document to download",
+          variant: "destructive",
+        });
+        return;
+      }
       
       if (profile && profile.document) {
         const downloadUrl = `/api/profiles/${profile.id}/download-document`;
@@ -273,20 +287,62 @@ export default function Dashboard() {
         
         console.log("Final filename:", filename);
         
-        // Create download link
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = filename;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+        // Create download link with multiple fallback methods
+        const downloadBlob = (blob: Blob, filename: string) => {
+          try {
+            // Method 1: Standard download link
+            if (window && document && document.body) {
+              const url = window.URL.createObjectURL(blob);
+              console.log("Created blob URL:", url);
+              
+              const link = document.createElement('a');
+              link.href = url;
+              link.download = filename;
+              link.style.display = 'none';
+              
+              document.body.appendChild(link);
+              link.click();
+              document.body.removeChild(link);
+              
+              setTimeout(() => {
+                window.URL.revokeObjectURL(url);
+              }, 100);
+              
+              return true;
+            }
+          } catch (error) {
+            console.error("Method 1 failed:", error);
+          }
+          
+          try {
+            // Method 2: Direct window.open fallback
+            if (window && window.URL) {
+              const url = window.URL.createObjectURL(blob);
+              const newWindow = window.open(url, '_blank');
+              
+              if (newWindow) {
+                setTimeout(() => {
+                  newWindow.close();
+                  window.URL.revokeObjectURL(url);
+                }, 1000);
+                return true;
+              }
+            }
+          } catch (error) {
+            console.error("Method 2 failed:", error);
+          }
+          
+          return false;
+        };
         
-        // Clean up
-        setTimeout(() => {
-          window.URL.revokeObjectURL(url);
-        }, 100);
+        const downloadSuccess = downloadBlob(blob, filename);
+        
+        if (!downloadSuccess) {
+          // Method 3: Final fallback - direct URL navigation
+          console.log("Trying direct URL navigation fallback");
+          const directUrl = `/api/profiles/${profile.id}/download-document`;
+          window.location.href = directUrl;
+        }
         
         toast({
           title: "Download Started",

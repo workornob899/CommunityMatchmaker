@@ -257,10 +257,75 @@
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.06);
 }
 
-/* Modal backdrop blur */
+/* Modal backdrop blur with glassmorphism */
 [data-radix-dialog-overlay] {
-  backdrop-filter: blur(8px);
-  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  background: rgba(0, 0, 0, 0.3);
+  animation: backdrop-fade-in 0.3s ease-out;
+}
+
+@keyframes backdrop-fade-in {
+  from {
+    opacity: 0;
+    backdrop-filter: blur(0px);
+  }
+  to {
+    opacity: 1;
+    backdrop-filter: blur(12px);
+  }
+}
+
+/* Enhanced modal animations */
+.animate-modal-in {
+  animation: modal-slide-in 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Professional card hover effects */
+.profile-info-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 16px;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-info-card:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1), 0 10px 20px rgba(0, 0, 0, 0.05);
+}
+
+.profile-info-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.profile-info-card:hover::before {
+  opacity: 1;
+}
+
+/* Glassmorphism enhancements */
+.glass-card {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 }
 
 /* Smooth transitions for interactive elements */

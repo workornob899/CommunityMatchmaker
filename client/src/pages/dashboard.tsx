@@ -750,70 +750,46 @@ export default function Dashboard() {
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Profession</Label>
-                      <Select
+                      <Input
+                        placeholder="Enter profession"
                         value={searchFilters.profession}
-                        onValueChange={(value) =>
-                          setSearchFilters({ ...searchFilters, profession: value })
+                        onChange={(e) =>
+                          setSearchFilters({ ...searchFilters, profession: e.target.value })
                         }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Professions" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">All Professions</SelectItem>
-                          {dynamicOptions.profession.map((profession) => (
-                            <SelectItem key={profession} value={profession}>
-                              {profession}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        className="w-full"
+                      />
                     </div>
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Birth Year</Label>
-                      <Select
+                      <Input
+                        type="number"
+                        placeholder="e.g. 1990"
+                        min="1940"
+                        max="2010"
                         value={searchFilters.birthYear}
-                        onValueChange={(value) =>
-                          setSearchFilters({ ...searchFilters, birthYear: value })
+                        onChange={(e) =>
+                          setSearchFilters({ ...searchFilters, birthYear: e.target.value })
                         }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Years" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">All Years</SelectItem>
-                          {Array.from({ length: 141 }, (_, i) => 2090 - i).map((year) => (
-                            <SelectItem key={year} value={year.toString()}>
-                              {year}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        className="w-full"
+                      />
                     </div>
                     
                     
                     
                     <div className="space-y-2">
                       <Label className="text-sm font-medium text-gray-700">Age</Label>
-                      <Select
+                      <Input
+                        type="number"
+                        placeholder="e.g. 25"
+                        min="18"
+                        max="80"
                         value={searchFilters.age}
-                        onValueChange={(value) =>
-                          setSearchFilters({ ...searchFilters, age: value })
+                        onChange={(e) =>
+                          setSearchFilters({ ...searchFilters, age: e.target.value })
                         }
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="All Ages" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="">All Ages</SelectItem>
-                          {Array.from({ length: 63 }, (_, i) => i + 18).map((age) => (
-                            <SelectItem key={age} value={age.toString()}>
-                              {age}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        className="w-full"
+                      />
                     </div>
                   </div>
                   
@@ -1105,23 +1081,17 @@ export default function Dashboard() {
               
               <div className="space-y-2">
                 <Label>Age *</Label>
-                <Select
+                <Input
+                  type="number"
+                  placeholder="Age"
+                  min="18"
+                  max="80"
                   value={newProfile.age}
-                  onValueChange={(value) =>
-                    setNewProfile({ ...newProfile, age: value })
+                  onChange={(e) =>
+                    setNewProfile({ ...newProfile, age: e.target.value })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Age" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 63 }, (_, i) => i + 18).map((age) => (
-                      <SelectItem key={age} value={age.toString()}>
-                        {age}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  required
+                />
               </div>
               
               <div className="space-y-2">

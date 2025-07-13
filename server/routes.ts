@@ -78,6 +78,43 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
+  // Document download endpoint with proper filename
+  app.get('/api/profiles/:id/download-document', requireAuth, async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.id);
+      const profile = await storage.getProfile(profileId);
+      
+      if (!profile) {
+        return res.status(404).json({ message: 'Profile not found' });
+      }
+      
+      if (!profile.document) {
+        return res.status(404).json({ message: 'No document found for this profile' });
+      }
+      
+      // Get the file path (remove /uploads prefix)
+      const fileName = profile.document.replace('/uploads/', '');
+      const filePath = path.join(uploadDir, fileName);
+      
+      // Check if file exists
+      if (!fs.existsSync(filePath)) {
+        return res.status(404).json({ message: 'Document file not found' });
+      }
+      
+      // Set the proper filename for download
+      const originalName = profile.documentOriginal || `document_${profile.id}`;
+      res.setHeader('Content-Disposition', `attachment; filename="${originalName}"`);
+      
+      // Stream the file
+      const fileStream = fs.createReadStream(filePath);
+      fileStream.pipe(res);
+      
+    } catch (error) {
+      console.error('Document download error:', error);
+      res.status(500).json({ message: 'Failed to download document' });
+    }
+  });
+
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
@@ -178,7 +215,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         height: req.body.height,
         birthYear: parseInt(req.body.birthYear),
         profilePicture: null as string | null,
+        profilePictureOriginal: null as string | null,
         document: null as string | null,
+        documentOriginal: null as string | null,
       };
 
       // Handle file uploads
@@ -186,10 +225,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (files.profilePicture && files.profilePicture[0]) {
         profileData.profilePicture = `/uploads/${files.profilePicture[0].filename}`;
+        profileData.profilePictureOriginal = files.profilePicture[0].originalname;
       }
       
       if (files.document && files.document[0]) {
         profileData.document = `/uploads/${files.document[0].filename}`;
+        profileData.documentOriginal = files.document[0].originalname;
       }
 
       const validatedData = insertProfileSchema.parse(profileData);

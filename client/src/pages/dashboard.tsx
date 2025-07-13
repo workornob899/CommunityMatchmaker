@@ -219,7 +219,22 @@ export default function Dashboard() {
   const handleDownload = (profile: Profile) => {
     try {
       if (profile && profile.document) {
-        window.open(profile.document, "_blank");
+        // Use the new download endpoint instead of direct file access
+        const downloadUrl = `/api/profiles/${profile.id}/download-document`;
+        
+        // Create a temporary link element to trigger download
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.download = ''; // Let the server set the filename
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        toast({
+          title: "Download Started",
+          description: "Your document is being downloaded",
+          variant: "default",
+        });
       } else {
         toast({
           title: "No Document",

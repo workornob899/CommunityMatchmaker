@@ -645,7 +645,7 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Genders</SelectItem>
-                            {dynamicOptions.gender.map((gender) => (
+                            {dynamicOptions.gender?.map((gender) => (
                               <SelectItem key={gender} value={gender}>
                                 {gender}
                               </SelectItem>
@@ -667,7 +667,7 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Professions</SelectItem>
-                            {dynamicOptions.profession.map((profession) => (
+                            {dynamicOptions.profession?.map((profession) => (
                               <SelectItem key={profession} value={profession}>
                                 {profession}
                               </SelectItem>
@@ -689,7 +689,7 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Birth Years</SelectItem>
-                            {dynamicOptions.birthYear.map((year) => (
+                            {dynamicOptions.birthYear?.map((year) => (
                               <SelectItem key={year} value={year}>
                                 {year}
                               </SelectItem>
@@ -711,7 +711,7 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Ages</SelectItem>
-                            {dynamicOptions.age.map((age) => (
+                            {dynamicOptions.age?.map((age) => (
                               <SelectItem key={age} value={age}>
                                 {age}
                               </SelectItem>
@@ -992,7 +992,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Age" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicOptions.age.map((age) => (
+                    {dynamicOptions.age?.map((age) => (
                       <SelectItem key={age} value={age}>
                         {age}
                       </SelectItem>
@@ -1013,7 +1013,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Gender" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicOptions.gender.map((gender) => (
+                    {dynamicOptions.gender?.map((gender) => (
                       <SelectItem key={gender} value={gender}>
                         {gender}
                       </SelectItem>
@@ -1034,7 +1034,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Profession" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicOptions.profession.map((profession) => (
+                    {dynamicOptions.profession?.map((profession) => (
                       <SelectItem key={profession} value={profession}>
                         {profession}
                       </SelectItem>
@@ -1055,7 +1055,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Qualification" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicOptions.qualification.map((qualification) => (
+                    {dynamicOptions.qualification?.map((qualification) => (
                       <SelectItem key={qualification} value={qualification}>
                         {qualification}
                       </SelectItem>
@@ -1076,7 +1076,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Birth Year" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicOptions.birthYear.map((year) => (
+                    {dynamicOptions.birthYear?.map((year) => (
                       <SelectItem key={year} value={year}>
                         {year}
                       </SelectItem>
@@ -1097,7 +1097,7 @@ export default function Dashboard() {
                     <SelectValue placeholder="Select Height" />
                   </SelectTrigger>
                   <SelectContent>
-                    {dynamicOptions.height.map((height) => (
+                    {dynamicOptions.height?.map((height) => (
                       <SelectItem key={height} value={height}>
                         {height}
                       </SelectItem>

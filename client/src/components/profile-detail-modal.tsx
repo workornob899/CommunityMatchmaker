@@ -12,16 +12,30 @@ interface ProfileDetailModalProps {
 }
 
 export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: ProfileDetailModalProps) {
-  if (!profile) return null;
+  if (!profile || !profile.id) return null;
 
   const handleDownload = () => {
-    if (profile.document && onDownload) {
-      onDownload(profile);
+    try {
+      if (profile?.document && onDownload) {
+        onDownload(profile);
+      }
+    } catch (error) {
+      console.error("Error in ProfileDetailModal download:", error);
+    }
+  };
+
+  const handleClose = () => {
+    try {
+      if (onClose) {
+        onClose();
+      }
+    } catch (error) {
+      console.error("Error closing ProfileDetailModal:", error);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="max-w-4xl bg-white/95 backdrop-blur-xl border-0 shadow-2xl animate-modal-in rounded-2xl overflow-hidden">
         {/* Glassmorphism background */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-blue-50/60 backdrop-blur-2xl -z-10" />
@@ -34,7 +48,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
           <Button
             variant="ghost"
             size="sm"
-            onClick={onClose}
+            onClick={handleClose}
             className="absolute -top-2 -right-2 h-10 w-10 p-0 hover:bg-white/80 rounded-full transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-sm"
           >
             <X className="w-5 h-5 text-gray-600" />
@@ -147,7 +161,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
             
             <Button
               variant="outline"
-              onClick={onClose}
+              onClick={handleClose}
               className="bg-white/80 backdrop-blur-sm border-2 border-gray-300 hover:bg-white hover:border-gray-400 text-gray-700 font-semibold px-8 py-4 text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 rounded-full"
             >
               <span>Close</span>

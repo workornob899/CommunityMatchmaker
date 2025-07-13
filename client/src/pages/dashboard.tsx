@@ -61,17 +61,25 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
 
   // Queries
-  const { data: profiles = [], isLoading: profilesLoading } = useQuery({
+  const { data: profiles = [], isLoading: profilesLoading, error: profilesError } = useQuery({
     queryKey: ["/api/profiles"],
+    enabled: !!user, // Only fetch when user is authenticated
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
-  const { data: stats } = useQuery({
+  const { data: stats, error: statsError } = useQuery({
     queryKey: ["/api/profiles/stats"],
+    enabled: !!user, // Only fetch when user is authenticated
+    retry: 1,
+    refetchOnWindowFocus: false,
   });
 
-  const { data: searchResults = [], isLoading: searchLoading } = useQuery({
+  const { data: searchResults = [], isLoading: searchLoading, error: searchError } = useQuery({
     queryKey: ["/api/profiles/search", searchFilters],
-    enabled: Object.values(searchFilters).some(Boolean),
+    enabled: !!user && Object.values(searchFilters).some(Boolean),
+    retry: 1,
+    refetchOnWindowFocus: false,
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(searchFilters).forEach(([key, value]) => {
@@ -209,14 +217,46 @@ export default function Dashboard() {
   };
 
   const handleDownload = (profile: Profile) => {
-    if (profile.document) {
-      window.open(profile.document, "_blank");
+    try {
+      if (profile && profile.document) {
+        window.open(profile.document, "_blank");
+      } else {
+        toast({
+          title: "No Document",
+          description: "This profile doesn't have a document to download",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error downloading document:", error);
+      toast({
+        title: "Download Error",
+        description: "Failed to download document",
+        variant: "destructive",
+      });
     }
   };
 
   const handleProfileClick = (profile: Profile) => {
-    setSelectedProfile(profile);
-    setIsProfileModalOpen(true);
+    try {
+      if (profile && profile.id) {
+        setSelectedProfile(profile);
+        setIsProfileModalOpen(true);
+      } else {
+        toast({
+          title: "Error",
+          description: "Invalid profile data",
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error("Error opening profile modal:", error);
+      toast({
+        title: "Error",
+        description: "Failed to open profile details",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEmailUpdate = () => {
@@ -262,6 +302,10 @@ export default function Dashboard() {
   };
 
   const displayedProfiles = Object.values(searchFilters).some(Boolean) ? searchResults : profiles;
+  
+  // Error handling
+  const hasError = profilesError || statsError || searchError;
+  const errorMessage = hasError ? "Failed to load data. Please try refreshing the page." : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -435,6 +479,18 @@ export default function Dashboard() {
           {/* Profile Section */}
           {activeSection === "profiles" && (
             <div className="space-y-8">
+              {/* Error Message */}
+              {errorMessage && (
+                <Card className="border-red-200 bg-red-50">
+                  <CardContent className="p-6">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                      <p className="text-red-700 font-medium">{errorMessage}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Filter Panel */}
               <Card className="card-shadow">
                 <CardHeader>
@@ -573,12 +629,51 @@ export default function Dashboard() {
               </Card>
 
               {/* Profile Grid */}
-              {profilesLoading ? (
-                <div className="text-center py-8">
-                  <Activity className="w-8 h-8 mx-auto mb-4 animate-spin" />
-                  <p>Loading profiles...</p>
+              {!user ? (
+                <Card className="text-center py-8">
+                  <CardContent>
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Users className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-600 mb-2">
+                      Authentication Required
+                    </h3>
+                    <p className="text-gray-500">
+                      Please log in to view profiles
+                    </p>
+                  </CardContent>
+                </Card>
+              ) : profilesLoading ? (
+                <div className="text-center py-12">
+                  <Activity className="w-8 h-8 mx-auto mb-4 animate-spin text-blue-500" />
+                  <p className="text-lg text-gray-600">Loading profiles...</p>
+                  <p className="text-sm text-gray-500 mt-2">Please wait while we fetch the latest data</p>
                 </div>
-              ) : displayedProfiles.length > 0 ? (
+              ) : hasError ? (
+                <Card className="text-center py-8 border-red-200 bg-red-50">
+                  <CardContent>
+                    <div className="w-16 h-16 mx-auto mb-4 bg-red-100 rounded-full flex items-center justify-center">
+                      <Users className="w-8 h-8 text-red-500" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-red-700 mb-2">
+                      Error Loading Profiles
+                    </h3>
+                    <p className="text-red-600 mb-4">
+                      {errorMessage}
+                    </p>
+                    <Button 
+                      onClick={() => {
+                        queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+                        queryClient.invalidateQueries({ queryKey: ["/api/profiles/stats"] });
+                      }}
+                      variant="outline"
+                      className="border-red-300 text-red-700 hover:bg-red-100"
+                    >
+                      Try Again
+                    </Button>
+                  </CardContent>
+                </Card>
+              ) : displayedProfiles && displayedProfiles.length > 0 ? (
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {displayedProfiles.map((profile: Profile) => (
                     <ProfileCard
@@ -590,17 +685,26 @@ export default function Dashboard() {
                   ))}
                 </div>
               ) : (
-                <Card className="text-center py-8">
+                <Card className="text-center py-12">
                   <CardContent>
-                    <Users className="w-16 h-16 mx-auto mb-4 text-gray-400" />
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center">
+                      <Users className="w-8 h-8 text-gray-400" />
+                    </div>
                     <h3 className="text-xl font-semibold text-gray-600 mb-2">
                       No profiles found
                     </h3>
-                    <p className="text-gray-500">
+                    <p className="text-gray-500 mb-4">
                       {Object.values(searchFilters).some(Boolean)
-                        ? "Try adjusting your search filters"
-                        : "Add some profiles to get started"}
+                        ? "Try adjusting your search filters to find more profiles"
+                        : "Add some profiles to get started with the matching system"}
                     </p>
+                    <Button 
+                      onClick={() => setShowAddProfile(true)}
+                      className="btn-primary"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Profile
+                    </Button>
                   </CardContent>
                 </Card>
               )}

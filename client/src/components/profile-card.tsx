@@ -12,17 +12,30 @@ interface ProfileCardProps {
 
 export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) {
   const handleDownload = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click when downloading
-    if (profile.document && onDownload) {
-      onDownload(profile);
+    try {
+      e.stopPropagation(); // Prevent card click when downloading
+      if (profile?.document && onDownload) {
+        onDownload(profile);
+      }
+    } catch (error) {
+      console.error("Error in ProfileCard download:", error);
     }
   };
 
   const handleCardClick = () => {
-    if (onClick) {
-      onClick(profile);
+    try {
+      if (onClick && profile) {
+        onClick(profile);
+      }
+    } catch (error) {
+      console.error("Error in ProfileCard click:", error);
     }
   };
+
+  // Safety check - don't render if profile is invalid
+  if (!profile || !profile.id) {
+    return null;
+  }
 
   return (
     <Card 

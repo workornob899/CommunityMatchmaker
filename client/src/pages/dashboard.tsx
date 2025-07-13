@@ -33,9 +33,9 @@ export default function Dashboard() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
     gender: "all",
-    profession: "",
-    birthYear: "",
-    age: "",
+    profession: "all",
+    birthYear: "all",
+    age: "all",
     date: "",
   });
   const [newProfile, setNewProfile] = useState({
@@ -122,13 +122,13 @@ export default function Dashboard() {
 
   const { data: searchResults = [], isLoading: searchLoading, error: searchError } = useQuery({
     queryKey: ["/api/profiles/search", searchFilters],
-    enabled: !!user && Object.values(searchFilters).some(value => value && value !== "all"),
+    enabled: !!user && Object.values(searchFilters).some(value => value && value !== "all" && value !== ""),
     retry: 1,
     refetchOnWindowFocus: false,
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(searchFilters).forEach(([key, value]) => {
-        if (value && value !== "all") {
+        if (value && value !== "all" && value !== "") {
           params.append(key, value);
         }
       });
@@ -419,7 +419,7 @@ export default function Dashboard() {
     setShowMatching(true);
   };
 
-  const displayedProfiles = Object.values(searchFilters).some(value => value && value !== "all") ? searchResults : profiles;
+  const displayedProfiles = Object.values(searchFilters).some(value => value && value !== "all" && value !== "") ? searchResults : profiles;
   
   // Error handling
   const hasError = profilesError || statsError || searchError;
@@ -666,7 +666,7 @@ export default function Dashboard() {
                             <SelectValue placeholder="Select Profession" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All Professions</SelectItem>
+                            <SelectItem value="all">All Professions</SelectItem>
                             {dynamicOptions.profession.map((profession) => (
                               <SelectItem key={profession} value={profession}>
                                 {profession}
@@ -688,7 +688,7 @@ export default function Dashboard() {
                             <SelectValue placeholder="Select Birth Year" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All Birth Years</SelectItem>
+                            <SelectItem value="all">All Birth Years</SelectItem>
                             {dynamicOptions.birthYear.map((year) => (
                               <SelectItem key={year} value={year}>
                                 {year}
@@ -710,7 +710,7 @@ export default function Dashboard() {
                             <SelectValue placeholder="Select Age" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="">All Ages</SelectItem>
+                            <SelectItem value="all">All Ages</SelectItem>
                             {dynamicOptions.age.map((age) => (
                               <SelectItem key={age} value={age}>
                                 {age}
@@ -736,9 +736,9 @@ export default function Dashboard() {
                         onClick={() => {
                           setSearchFilters({
                             gender: "all",
-                            profession: "",
-                            birthYear: "",
-                            age: "",
+                            profession: "all",
+                            birthYear: "all",
+                            age: "all",
                             date: "",
                           });
                           queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });

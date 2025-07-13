@@ -70,38 +70,43 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
               {profile.name}
             </h3>
             
-            <div className="space-y-3 text-sm text-gray-600">
-              <div className="flex items-center">
+            {/* First Row: Gender, Age, Profession */}
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
+              <div className="flex flex-col items-center text-center">
                 {profile.gender === "Male" ? (
-                  <UserCheck className="w-4 h-4 mr-3 flex-shrink-0 text-blue-500" />
+                  <UserCheck className="w-4 h-4 mb-1 text-blue-500" />
                 ) : (
-                  <UserX className="w-4 h-4 mr-3 flex-shrink-0 text-pink-500" />
+                  <UserX className="w-4 h-4 mb-1 text-pink-500" />
                 )}
-                <span className="font-semibold text-gray-700">{profile.gender}</span>
+                <span className="font-semibold text-gray-700 truncate">{profile.gender}</span>
               </div>
               
-              <div className="flex items-center">
-                <Calendar className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                <span className="font-medium">{profile.age} years old</span>
+              <div className="flex flex-col items-center text-center">
+                <Calendar className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.age} years</span>
               </div>
               
-              {profile.profession && (
-                <div className="flex items-center">
-                  <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                  <span className="truncate font-medium">{profile.profession}</span>
-                </div>
-              )}
+              <div className="flex flex-col items-center text-center">
+                <Briefcase className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.profession || "N/A"}</span>
+              </div>
+            </div>
+
+            {/* Second Row: Qualification, Height, ID */}
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+              <div className="flex flex-col items-center text-center">
+                <Briefcase className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.qualification || "N/A"}</span>
+              </div>
               
-              {profile.qualification && (
-                <div className="flex items-center">
-                  <Briefcase className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                  <span className="truncate font-medium">{profile.qualification}</span>
-                </div>
-              )}
+              <div className="flex flex-col items-center text-center">
+                <Ruler className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.height}</span>
+              </div>
               
-              <div className="flex items-center">
-                <Ruler className="w-4 h-4 mr-3 flex-shrink-0 text-gray-500" />
-                <span className="font-medium">{profile.height}</span>
+              <div className="flex flex-col items-center text-center">
+                <User className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate text-xs">{profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}</span>
               </div>
             </div>
             

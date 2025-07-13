@@ -39,6 +39,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
     age: "",
     gender: type === "bride" ? GENDERS.FEMALE : GENDERS.MALE,
     profession: "",
+    qualification: "",
     height: "",
   });
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
@@ -137,6 +138,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
       age: parseInt(formData.age),
       gender: formData.gender,
       profession: formData.profession || undefined,
+      qualification: formData.qualification || undefined,
       height: formData.height,
     };
 
@@ -151,6 +153,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
       age: "",
       gender: type === "bride" ? GENDERS.FEMALE : GENDERS.MALE,
       profession: "",
+      qualification: "",
       height: "",
     });
     setMatchResult(null);
@@ -243,6 +246,27 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                     </SelectContent>
                   </Select>
                 </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="qualification">Qualification</Label>
+                  <Select
+                    value={formData.qualification}
+                    onValueChange={(value) => setFormData({ ...formData, qualification: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select qualification (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(dynamicOptions.qualification || []).filter(Boolean).map((qualification, index) => (
+                        <SelectItem key={`qualification-${index}-${qualification}`} value={qualification}>
+                          {qualification}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2 space-y-2"></div>
 
                 <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="height">Height *</Label>

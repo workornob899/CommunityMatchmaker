@@ -218,21 +218,47 @@ export default function Dashboard() {
 
   const handleDownload = async (profile: Profile) => {
     try {
+      console.log("Starting download for profile:", profile.id);
+      
       if (profile && profile.document) {
         const downloadUrl = `/api/profiles/${profile.id}/download-document`;
+        console.log("Download URL:", downloadUrl);
         
         // Use fetch to handle authentication properly
         const response = await fetch(downloadUrl, {
           method: 'GET',
           credentials: 'include', // Include cookies for session authentication
+          headers: {
+            'Accept': 'application/octet-stream',
+          }
         });
         
+        console.log("Response status:", response.status);
+        console.log("Response headers:", Object.fromEntries(response.headers.entries()));
+        
         if (!response.ok) {
-          throw new Error(`Download failed: ${response.status}`);
+          const errorText = await response.text();
+          console.error("Download failed:", response.status, errorText);
+          
+          if (response.status === 401) {
+            toast({
+              title: "Authentication Error",
+              description: "Please log in again to download documents",
+              variant: "destructive",
+            });
+            return;
+          }
+          
+          throw new Error(`Download failed: ${response.status} - ${errorText}`);
         }
         
         // Get the blob data
         const blob = await response.blob();
+        console.log("Blob size:", blob.size);
+        
+        if (blob.size === 0) {
+          throw new Error("Downloaded file is empty");
+        }
         
         // Extract filename from Content-Disposition header
         const contentDisposition = response.headers.get('Content-Disposition');
@@ -245,17 +271,22 @@ export default function Dashboard() {
           }
         }
         
+        console.log("Final filename:", filename);
+        
         // Create download link
         const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
         link.href = url;
         link.download = filename;
+        link.style.display = 'none';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
         // Clean up
-        window.URL.revokeObjectURL(url);
+        setTimeout(() => {
+          window.URL.revokeObjectURL(url);
+        }, 100);
         
         toast({
           title: "Download Started",
@@ -263,6 +294,7 @@ export default function Dashboard() {
           variant: "default",
         });
       } else {
+        console.log("No document found for profile:", profile);
         toast({
           title: "No Document",
           description: "This profile doesn't have a document to download",
@@ -273,7 +305,7 @@ export default function Dashboard() {
       console.error("Error downloading document:", error);
       toast({
         title: "Download Error",
-        description: "Failed to download document. Please try again.",
+        description: `Failed to download document: ${error.message}`,
         variant: "destructive",
       });
     }

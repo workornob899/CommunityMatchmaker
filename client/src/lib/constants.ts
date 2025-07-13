@@ -68,11 +68,21 @@ export const HEIGHT_OPTIONS = [
   "6'5\"",
 ];
 
-// Generate age options from 18 to 80
-export const AGE_OPTIONS = Array.from({ length: 63 }, (_, i) => (i + 18).toString());
+// Simple age options for common ranges
+export const AGE_OPTIONS = [
+  "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30",
+  "31", "32", "33", "34", "35", "36", "37", "38", "39", "40", "41", "42", "43", "44", "45",
+  "46", "47", "48", "49", "50", "51", "52", "53", "54", "55", "56", "57", "58", "59", "60"
+];
 
-// Generate birth year options from 1950 to 2090
-export const BIRTH_YEAR_OPTIONS = Array.from({ length: 141 }, (_, i) => (1950 + i).toString());
+// Simple birth year options for common ranges
+export const BIRTH_YEAR_OPTIONS = [
+  "1960", "1961", "1962", "1963", "1964", "1965", "1966", "1967", "1968", "1969",
+  "1970", "1971", "1972", "1973", "1974", "1975", "1976", "1977", "1978", "1979",
+  "1980", "1981", "1982", "1983", "1984", "1985", "1986", "1987", "1988", "1989",
+  "1990", "1991", "1992", "1993", "1994", "1995", "1996", "1997", "1998", "1999",
+  "2000", "2001", "2002", "2003", "2004", "2005", "2006"
+];
 
 // Dynamic options fetching function
 export const fetchCustomOptions = async (fieldType: string) => {

@@ -87,16 +87,26 @@ export default function Dashboard() {
         getCombinedOptions('birthYear'),
       ]);
       
+      // Ensure all options are arrays and have valid values
       setDynamicOptions({
-        profession: professionOptions,
-        qualification: qualificationOptions,
-        height: heightOptions,
-        gender: genderOptions,
-        age: ageOptions,
-        birthYear: birthYearOptions,
+        profession: Array.isArray(professionOptions) ? professionOptions : PROFESSION_OPTIONS,
+        qualification: Array.isArray(qualificationOptions) ? qualificationOptions : QUALIFICATION_OPTIONS,
+        height: Array.isArray(heightOptions) ? heightOptions : HEIGHT_OPTIONS,
+        gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
+        age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
+        birthYear: Array.isArray(birthYearOptions) ? birthYearOptions : BIRTH_YEAR_OPTIONS,
       });
     } catch (error) {
       console.error('Error refreshing dynamic options:', error);
+      // Fallback to default options on error
+      setDynamicOptions({
+        profession: PROFESSION_OPTIONS,
+        qualification: QUALIFICATION_OPTIONS,
+        height: HEIGHT_OPTIONS,
+        gender: [GENDERS.MALE, GENDERS.FEMALE],
+        age: AGE_OPTIONS,
+        birthYear: BIRTH_YEAR_OPTIONS,
+      });
     }
   };
 
@@ -645,11 +655,13 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Genders</SelectItem>
-                            {dynamicOptions.gender?.map((gender) => (
-                              <SelectItem key={gender} value={gender}>
-                                {gender}
-                              </SelectItem>
-                            ))}
+                            {dynamicOptions.gender?.filter(Boolean).map((gender, index) => 
+                              gender ? (
+                                <SelectItem key={`gender-${index}`} value={gender}>
+                                  {gender}
+                                </SelectItem>
+                              ) : null
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -667,11 +679,13 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Professions</SelectItem>
-                            {dynamicOptions.profession?.map((profession) => (
-                              <SelectItem key={profession} value={profession}>
-                                {profession}
-                              </SelectItem>
-                            ))}
+                            {dynamicOptions.profession?.filter(Boolean).map((profession, index) => 
+                              profession ? (
+                                <SelectItem key={`profession-${index}`} value={profession}>
+                                  {profession}
+                                </SelectItem>
+                              ) : null
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -689,11 +703,13 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Birth Years</SelectItem>
-                            {dynamicOptions.birthYear?.map((year) => (
-                              <SelectItem key={year} value={year}>
-                                {year}
-                              </SelectItem>
-                            ))}
+                            {dynamicOptions.birthYear?.filter(Boolean).map((year, index) => 
+                              year ? (
+                                <SelectItem key={`birthYear-${index}`} value={year}>
+                                  {year}
+                                </SelectItem>
+                              ) : null
+                            )}
                           </SelectContent>
                         </Select>
                       </div>
@@ -711,11 +727,13 @@ export default function Dashboard() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="all">All Ages</SelectItem>
-                            {dynamicOptions.age?.map((age) => (
-                              <SelectItem key={age} value={age}>
-                                {age}
-                              </SelectItem>
-                            ))}
+                            {dynamicOptions.age?.filter(Boolean).map((age, index) => 
+                              age ? (
+                                <SelectItem key={`age-${index}`} value={age}>
+                                  {age}
+                                </SelectItem>
+                              ) : null
+                            )}
                           </SelectContent>
                         </Select>
                       </div>

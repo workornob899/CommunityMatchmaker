@@ -82,13 +82,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/profiles/:id/download-document', requireAuth, async (req, res) => {
     try {
       const profileId = parseInt(req.params.id);
+      console.log(`Download request for profile ID: ${profileId}`);
+      
       const profile = await storage.getProfile(profileId);
       
       if (!profile) {
+        console.log(`Profile not found: ${profileId}`);
         return res.status(404).json({ message: 'Profile not found' });
       }
       
       if (!profile.document) {
+        console.log(`No document found for profile: ${profileId}`);
         return res.status(404).json({ message: 'No document found for this profile' });
       }
       
@@ -96,18 +100,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const fileName = profile.document.replace('/uploads/', '');
       const filePath = path.join(uploadDir, fileName);
       
+      console.log(`Looking for file at: ${filePath}`);
+      console.log(`Original document name: ${profile.documentOriginal}`);
+      
       // Check if file exists
       if (!fs.existsSync(filePath)) {
+        console.log(`File does not exist: ${filePath}`);
         return res.status(404).json({ message: 'Document file not found' });
       }
       
       // Set the proper filename for download
       const originalName = profile.documentOriginal || `document_${profile.id}`;
+      console.log(`Setting download filename to: ${originalName}`);
+      
       res.setHeader('Content-Disposition', `attachment; filename="${originalName}"`);
+      res.setHeader('Content-Type', 'application/octet-stream');
       
       // Stream the file
       const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);
+      
+      console.log(`File download started for: ${originalName}`);
       
     } catch (error) {
       console.error('Document download error:', error);

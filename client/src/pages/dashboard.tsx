@@ -216,23 +216,50 @@ export default function Dashboard() {
     queryClient.refetchQueries({ queryKey: ["/api/profiles/search", searchFilters] });
   };
 
-  const handleDownload = (profile: Profile) => {
+  const handleDownload = async (profile: Profile) => {
     try {
       if (profile && profile.document) {
-        // Use the new download endpoint instead of direct file access
         const downloadUrl = `/api/profiles/${profile.id}/download-document`;
         
-        // Create a temporary link element to trigger download
+        // Use fetch to handle authentication properly
+        const response = await fetch(downloadUrl, {
+          method: 'GET',
+          credentials: 'include', // Include cookies for session authentication
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Download failed: ${response.status}`);
+        }
+        
+        // Get the blob data
+        const blob = await response.blob();
+        
+        // Extract filename from Content-Disposition header
+        const contentDisposition = response.headers.get('Content-Disposition');
+        let filename = `document_${profile.id}`;
+        
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="([^"]+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+        
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = downloadUrl;
-        link.download = ''; // Let the server set the filename
+        link.href = url;
+        link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         
+        // Clean up
+        window.URL.revokeObjectURL(url);
+        
         toast({
           title: "Download Started",
-          description: "Your document is being downloaded",
+          description: `Downloading ${filename}`,
           variant: "default",
         });
       } else {
@@ -246,7 +273,7 @@ export default function Dashboard() {
       console.error("Error downloading document:", error);
       toast({
         title: "Download Error",
-        description: "Failed to download document",
+        description: "Failed to download document. Please try again.",
         variant: "destructive",
       });
     }

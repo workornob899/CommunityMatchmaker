@@ -32,10 +32,10 @@ export default function Dashboard() {
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
-    gender: "",
+    gender: "all",
     profession: "",
     birthYear: "",
-    height: "",
+    height: "all",
     age: "",
     date: "",
   });
@@ -77,13 +77,13 @@ export default function Dashboard() {
 
   const { data: searchResults = [], isLoading: searchLoading, error: searchError } = useQuery({
     queryKey: ["/api/profiles/search", searchFilters],
-    enabled: !!user && Object.values(searchFilters).some(Boolean),
+    enabled: !!user && Object.values(searchFilters).some(value => value && value !== "all"),
     retry: 1,
     refetchOnWindowFocus: false,
     queryFn: async () => {
       const params = new URLSearchParams();
       Object.entries(searchFilters).forEach(([key, value]) => {
-        if (value) {
+        if (value && value !== "all") {
           params.append(key, value);
         }
       });
@@ -301,7 +301,7 @@ export default function Dashboard() {
     setShowMatching(true);
   };
 
-  const displayedProfiles = Object.values(searchFilters).some(Boolean) ? searchResults : profiles;
+  const displayedProfiles = Object.values(searchFilters).some(value => value && value !== "all") ? searchResults : profiles;
   
   // Error handling
   const hasError = profilesError || statsError || searchError;
@@ -525,7 +525,7 @@ export default function Dashboard() {
                           <SelectValue placeholder="All Genders" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">All Genders</SelectItem>
+                          <SelectItem value="all">All Genders</SelectItem>
                           <SelectItem value="Male">Male</SelectItem>
                           <SelectItem value="Female">Female</SelectItem>
                         </SelectContent>
@@ -571,7 +571,7 @@ export default function Dashboard() {
                           <SelectValue placeholder="Any Height" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">Any Height</SelectItem>
+                          <SelectItem value="all">Any Height</SelectItem>
                           {HEIGHT_OPTIONS.map((height) => (
                             <SelectItem key={height} value={height}>
                               {height}
@@ -611,10 +611,10 @@ export default function Dashboard() {
                       variant="outline"
                       onClick={() => {
                         setSearchFilters({
-                          gender: "",
+                          gender: "all",
                           profession: "",
                           birthYear: "",
-                          height: "",
+                          height: "all",
                           age: "",
                           date: "",
                         });
@@ -694,7 +694,7 @@ export default function Dashboard() {
                       No profiles found
                     </h3>
                     <p className="text-gray-500 mb-4">
-                      {Object.values(searchFilters).some(Boolean)
+                      {Object.values(searchFilters).some(value => value && value !== "all")
                         ? "Try adjusting your search filters to find more profiles"
                         : "Add some profiles to get started with the matching system"}
                     </p>

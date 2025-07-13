@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,7 +11,7 @@ import { Heart, UserCheck, UserX, Calendar, Briefcase, Ruler, Star } from "lucid
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { GENDERS, HEIGHT_OPTIONS } from "@/lib/constants";
+import { GENDERS, HEIGHT_OPTIONS, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, AGE_OPTIONS, getCombinedOptions } from "@/lib/constants";
 import { Profile } from "@shared/schema";
 
 interface MatchingModalProps {
@@ -43,6 +43,53 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
   });
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const { toast } = useToast();
+
+  // Dynamic options state
+  const [dynamicOptions, setDynamicOptions] = useState({
+    profession: PROFESSION_OPTIONS,
+    qualification: QUALIFICATION_OPTIONS,
+    height: HEIGHT_OPTIONS,
+    gender: [GENDERS.MALE, GENDERS.FEMALE],
+    age: AGE_OPTIONS,
+  });
+
+  // Function to refresh dynamic options
+  const refreshDynamicOptions = async () => {
+    try {
+      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions] = await Promise.all([
+        getCombinedOptions('profession'),
+        getCombinedOptions('qualification'),
+        getCombinedOptions('height'),
+        getCombinedOptions('gender'),
+        getCombinedOptions('age'),
+      ]);
+
+      setDynamicOptions({
+        profession: Array.isArray(professionOptions) ? professionOptions : PROFESSION_OPTIONS,
+        qualification: Array.isArray(qualificationOptions) ? qualificationOptions : QUALIFICATION_OPTIONS,
+        height: Array.isArray(heightOptions) ? heightOptions : HEIGHT_OPTIONS,
+        gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
+        age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
+      });
+    } catch (error) {
+      console.error('Error refreshing dynamic options:', error);
+      // Fallback to default options on error
+      setDynamicOptions({
+        profession: PROFESSION_OPTIONS,
+        qualification: QUALIFICATION_OPTIONS,
+        height: HEIGHT_OPTIONS,
+        gender: [GENDERS.MALE, GENDERS.FEMALE],
+        age: AGE_OPTIONS,
+      });
+    }
+  };
+
+  // Load dynamic options when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      refreshDynamicOptions();
+    }
+  }, [isOpen]);
 
   const matchingMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -140,16 +187,21 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
 
                 <div className="space-y-2">
                   <Label htmlFor="age">Age *</Label>
-                  <Input
-                    id="age"
-                    type="number"
-                    placeholder="Age"
-                    min="18"
-                    max="80"
+                  <Select
                     value={formData.age}
-                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                    required
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, age: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Age" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(dynamicOptions.age || []).filter(Boolean).map((age, index) => (
+                        <SelectItem key={`age-${index}-${age}`} value={age}>
+                          {age}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-2">
@@ -162,8 +214,11 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value={GENDERS.MALE}>Male</SelectItem>
-                      <SelectItem value={GENDERS.FEMALE}>Female</SelectItem>
+                      {(dynamicOptions.gender || []).filter(Boolean).map((gender, index) => (
+                        <SelectItem key={`gender-${index}-${gender}`} value={gender}>
+                          {gender}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -172,13 +227,21 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                   <Label htmlFor="profession">
                     Profession {formData.gender === "Male" ? "*" : ""}
                   </Label>
-                  <Input
-                    id="profession"
-                    placeholder={formData.gender === "Male" ? "Enter profession (required)" : "Enter profession (optional)"}
+                  <Select
                     value={formData.profession}
-                    onChange={(e) => setFormData({ ...formData, profession: e.target.value })}
-                    required={formData.gender === "Male"}
-                  />
+                    onValueChange={(value) => setFormData({ ...formData, profession: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder={formData.gender === "Male" ? "Select profession (required)" : "Select profession (optional)"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(dynamicOptions.profession || []).filter(Boolean).map((profession, index) => (
+                        <SelectItem key={`profession-${index}-${profession}`} value={profession}>
+                          {profession}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="md:col-span-2 space-y-2">
@@ -191,8 +254,8 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                       <SelectValue placeholder="Select height" />
                     </SelectTrigger>
                     <SelectContent>
-                      {HEIGHT_OPTIONS.map((height) => (
-                        <SelectItem key={height} value={height}>
+                      {(dynamicOptions.height || []).filter(Boolean).map((height, index) => (
+                        <SelectItem key={`height-${index}-${height}`} value={height}>
                           {height}
                         </SelectItem>
                       ))}

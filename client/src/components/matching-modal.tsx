@@ -140,21 +140,16 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
 
                 <div className="space-y-2">
                   <Label htmlFor="age">Age *</Label>
-                  <Select
+                  <Input
+                    id="age"
+                    type="number"
+                    placeholder="Age"
+                    min="18"
+                    max="80"
                     value={formData.age}
-                    onValueChange={(value) => setFormData({ ...formData, age: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Age" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Array.from({ length: 63 }, (_, i) => i + 18).map((age) => (
-                        <SelectItem key={age} value={age.toString()}>
-                          {age}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                    required
+                  />
                 </div>
 
                 <div className="space-y-2">

@@ -153,10 +153,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         date: req.query.date as string,
       };
 
-      // Remove undefined values
-      Object.keys(filters).forEach(key => 
-        filters[key as keyof typeof filters] === undefined && delete filters[key as keyof typeof filters]
-      );
+      // Remove undefined values and 'all' values
+      Object.keys(filters).forEach(key => {
+        const value = filters[key as keyof typeof filters];
+        if (value === undefined || value === "all" || value === "") {
+          delete filters[key as keyof typeof filters];
+        }
+      });
 
       const profiles = await storage.searchProfiles(filters);
       res.json(profiles);

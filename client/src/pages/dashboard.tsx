@@ -5,6 +5,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sidebar } from "@/components/sidebar";
 import { ProfileCard } from "@/components/profile-card";
@@ -14,7 +17,7 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { 
   Menu, Plus, Users, UserCheck, UserX, TrendingUp, Activity, 
   Search, Save, Calendar, Briefcase, Ruler, 
-  UserPlus, Heart, Settings as SettingsIcon 
+  UserPlus, Heart, Settings as SettingsIcon, MoreHorizontal, Edit2, Eye, Trash2 
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -38,6 +41,10 @@ export default function Dashboard() {
     age: "all",
     date: "",
   });
+  const [profileIdSearch, setProfileIdSearch] = useState("");
+  const [profileManagementSearch, setProfileManagementSearch] = useState("");
+  const [editingProfile, setEditingProfile] = useState<Profile | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [newProfile, setNewProfile] = useState({
     name: "",
     age: "",
@@ -260,6 +267,76 @@ export default function Dashboard() {
     },
   });
 
+  const updateProfileMutation = useMutation({
+    mutationFn: async ({ id, formData }: { id: number; formData: FormData }) => {
+      const response = await fetch(`/api/profiles/${id}`, {
+        method: "PATCH",
+        body: formData,
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to update profile");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles/stats"] });
+      setShowEditModal(false);
+      setEditingProfile(null);
+      setNewProfile({
+        name: "",
+        age: "",
+        gender: "",
+        profession: "",
+        qualification: "",
+        height: "",
+        birthYear: "",
+      });
+      setProfilePicture(null);
+      setDocument(null);
+      toast({
+        title: "Success",
+        description: "Profile updated successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update profile.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteProfileMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const response = await fetch(`/api/profiles/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete profile");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/profiles/stats"] });
+      toast({
+        title: "Success",
+        description: "Profile deleted successfully!",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete profile.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleAddProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
@@ -430,7 +507,69 @@ export default function Dashboard() {
     setShowMatching(true);
   };
 
-  const displayedProfiles = Object.values(searchFilters).some(value => value && value !== "all" && value !== "") ? searchResults : profiles;
+  const handleEditProfile = (profile: Profile) => {
+    setEditingProfile(profile);
+    setNewProfile({
+      name: profile.name,
+      age: profile.age.toString(),
+      gender: profile.gender,
+      profession: profile.profession || "",
+      qualification: profile.qualification || "",
+      height: profile.height,
+      birthYear: profile.birthYear.toString(),
+    });
+    setProfilePicture(null);
+    setDocument(null);
+    setShowEditModal(true);
+  };
+
+  const handleDeleteProfile = (id: number) => {
+    if (window.confirm("Are you sure you want to delete this profile?")) {
+      deleteProfileMutation.mutate(id);
+    }
+  };
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProfile) return;
+
+    const formData = new FormData();
+    Object.entries(newProfile).forEach(([key, value]) => {
+      if (value) formData.append(key, value);
+    });
+
+    if (profilePicture) {
+      formData.append("profilePicture", profilePicture);
+    }
+    if (document) {
+      formData.append("document", document);
+    }
+
+    updateProfileMutation.mutate({ id: editingProfile.id, formData });
+  };
+
+  // Profile ID search functionality
+  const profileIdSearchResults = profileIdSearch.trim() 
+    ? profiles.filter(profile => 
+        profile.profileId?.toLowerCase().includes(profileIdSearch.toLowerCase().trim())
+      )
+    : [];
+
+  // Profile Management search functionality
+  const profileManagementResults = profileManagementSearch.trim()
+    ? profiles.filter(profile => 
+        profile.name.toLowerCase().includes(profileManagementSearch.toLowerCase()) ||
+        profile.profileId?.toLowerCase().includes(profileManagementSearch.toLowerCase()) ||
+        profile.profession?.toLowerCase().includes(profileManagementSearch.toLowerCase()) ||
+        profile.gender.toLowerCase().includes(profileManagementSearch.toLowerCase())
+      )
+    : profiles;
+
+  const displayedProfiles = profileIdSearch.trim() 
+    ? profileIdSearchResults
+    : Object.values(searchFilters).some(value => value && value !== "all" && value !== "") 
+      ? searchResults 
+      : profiles;
 
   // Error handling
   const hasError = profilesError || statsError || searchError;
@@ -620,6 +759,41 @@ export default function Dashboard() {
                     </CardContent>
                   </Card>
                 )}
+
+                {/* Profile ID Search */}
+                <Card className="card-shadow">
+                  <CardHeader>
+                    <CardTitle className="text-xl text-gray-800 flex items-center">
+                      <Search className="w-5 h-5 mr-2" />
+                      Search by Profile ID
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex gap-4">
+                      <Input
+                        placeholder="Enter Profile ID (e.g., GB-47805)"
+                        value={profileIdSearch}
+                        onChange={(e) => setProfileIdSearch(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button
+                        onClick={() => setProfileIdSearch("")}
+                        variant="outline"
+                        className="px-4"
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    {profileIdSearch.trim() && (
+                      <div className="mt-4 text-sm text-gray-600">
+                        {profileIdSearchResults.length > 0 
+                          ? `Found ${profileIdSearchResults.length} profile(s) matching "${profileIdSearch}"`
+                          : `No profiles found matching "${profileIdSearch}"`
+                        }
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
 
                 {/* Filter Panel */}
                 <Card className="card-shadow">
@@ -812,6 +986,155 @@ export default function Dashboard() {
                     </Card>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Profile Management Section */}
+            {activeSection === "profile-management" && (
+              <div className="space-y-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-3xl font-bold text-gray-800">Profile Management</h2>
+                    <p className="text-gray-600 mt-1">Manage all matrimonial profiles</p>
+                  </div>
+                  <Button
+                    onClick={() => setShowAddProfile(true)}
+                    className="btn-primary"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Profile
+                  </Button>
+                </div>
+
+                {/* Search Bar */}
+                <Card className="card-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-4">
+                      <Search className="w-5 h-5 text-gray-400" />
+                      <Input
+                        placeholder="Search profiles (name, ID, profession, gender...)"
+                        value={profileManagementSearch}
+                        onChange={(e) => setProfileManagementSearch(e.target.value)}
+                        className="flex-1"
+                      />
+                      {profileManagementSearch && (
+                        <Button
+                          onClick={() => setProfileManagementSearch("")}
+                          variant="outline"
+                          size="sm"
+                        >
+                          Clear
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Profiles Table */}
+                <Card className="card-shadow">
+                  <CardContent className="p-0">
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Date</TableHead>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Profile ID</TableHead>
+                            <TableHead>Gender</TableHead>
+                            <TableHead>Age</TableHead>
+                            <TableHead>Profession</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {profilesLoading ? (
+                            [...Array(5)].map((_, i) => (
+                              <TableRow key={i}>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                                <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
+                              </TableRow>
+                            ))
+                          ) : profileManagementResults.length > 0 ? (
+                            profileManagementResults.map((profile) => (
+                              <TableRow key={profile.id}>
+                                <TableCell className="font-medium">
+                                  {new Date(profile.createdAt).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell>{profile.name}</TableCell>
+                                <TableCell>
+                                  <Badge variant="outline">{profile.profileId}</Badge>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge variant={profile.gender === "Female" ? "default" : "secondary"}>
+                                    {profile.gender}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>{profile.age}</TableCell>
+                                <TableCell>{profile.profession || "N/A"}</TableCell>
+                                <TableCell className="text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button variant="ghost" size="sm">
+                                        <MoreHorizontal className="w-4 h-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onClick={() => handleProfileClick(profile)}>
+                                        <Eye className="w-4 h-4 mr-2" />
+                                        View Profile
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleEditProfile(profile)}>
+                                        <Edit2 className="w-4 h-4 mr-2" />
+                                        Edit Profile
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem 
+                                        onClick={() => handleDeleteProfile(profile.id)}
+                                        className="text-red-600"
+                                      >
+                                        <Trash2 className="w-4 h-4 mr-2" />
+                                        Delete Profile
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={7} className="text-center py-8">
+                                <div className="flex flex-col items-center">
+                                  <Users className="w-12 h-12 text-gray-400 mb-4" />
+                                  <h3 className="text-lg font-semibold text-gray-600 mb-2">
+                                    {profileManagementSearch ? "No matching profiles found" : "No profiles yet"}
+                                  </h3>
+                                  <p className="text-gray-500 mb-4">
+                                    {profileManagementSearch 
+                                      ? "Try adjusting your search terms"
+                                      : "Create your first profile to get started"}
+                                  </p>
+                                  {!profileManagementSearch && (
+                                    <Button
+                                      onClick={() => setShowAddProfile(true)}
+                                      className="btn-primary"
+                                    >
+                                      <Plus className="w-4 h-4 mr-2" />
+                                      Add First Profile
+                                    </Button>
+                                  )}
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             )}
 
@@ -1155,6 +1478,191 @@ export default function Dashboard() {
               >
                 <Plus className="w-4 h-4 mr-2" />
                 {addProfileMutation.isPending ? "Adding..." : "Add Profile"}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Profile Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold text-gray-800">Edit Profile</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleUpdateProfile} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Name *</Label>
+                <Input
+                  placeholder="Enter full name"
+                  value={newProfile.name}
+                  onChange={(e) =>
+                    setNewProfile({ ...newProfile, name: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Age *</Label>
+                <Input
+                  type="number"
+                  placeholder="Enter age"
+                  value={newProfile.age}
+                  onChange={(e) =>
+                    setNewProfile({ ...newProfile, age: e.target.value })
+                  }
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Gender *</Label>
+                <Select
+                  value={newProfile.gender}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, gender: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.gender || []).map((gender) => (
+                      <SelectItem key={gender} value={gender}>
+                        {gender}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Profession</Label>
+                <Select
+                  value={newProfile.profession}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, profession: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Profession" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.profession || []).map((profession) => (
+                      <SelectItem key={profession} value={profession}>
+                        {profession}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Qualification</Label>
+                <Select
+                  value={newProfile.qualification}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, qualification: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Qualification" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.qualification || []).map((qualification) => (
+                      <SelectItem key={qualification} value={qualification}>
+                        {qualification}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Birth Year</Label>
+                <Select
+                  value={newProfile.birthYear}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, birthYear: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Birth Year" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.birthYear || []).map((year) => (
+                      <SelectItem key={year} value={year}>
+                        {year}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Height</Label>
+                <Select
+                  value={newProfile.height}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, height: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Height" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.height || []).map((height) => (
+                      <SelectItem key={height} value={height}>
+                        {height}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Profile Picture</Label>
+              <FileUpload
+                accept="image/*"
+                onFileSelect={setProfilePicture}
+                preview
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Document</Label>
+              <FileUpload
+                accept=".pdf,.doc,.docx"
+                onFileSelect={setDocument}
+              >
+                <div className="p-8">
+                  <SettingsIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-600">Upload supporting document (PDF, DOC)</p>
+                </div>
+              </FileUpload>
+            </div>
+
+            <div className="flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingProfile(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="btn-primary"
+                disabled={updateProfileMutation.isPending}
+              >
+                <Save className="w-4 h-4 mr-2" />
+                {updateProfileMutation.isPending ? "Updating..." : "Update Profile"}
               </Button>
             </div>
           </form>

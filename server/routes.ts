@@ -274,6 +274,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Update profile
+  app.patch('/api/profiles/:id', requireAuth, upload.fields([
+    { name: 'profilePicture', maxCount: 1 },
+    { name: 'document', maxCount: 1 }
+  ]), async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.id);
+      const profileData = {
+        name: req.body.name,
+        age: parseInt(req.body.age),
+        gender: req.body.gender,
+        profession: req.body.profession || null,
+        qualification: req.body.qualification || null,
+        height: req.body.height,
+        birthYear: parseInt(req.body.birthYear),
+        profilePicture: null as string | null,
+        profilePictureOriginal: null as string | null,
+        document: null as string | null,
+        documentOriginal: null as string | null,
+      };
+
+      // Handle file uploads
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      
+      if (files.profilePicture && files.profilePicture[0]) {
+        profileData.profilePicture = `/uploads/${files.profilePicture[0].filename}`;
+        profileData.profilePictureOriginal = files.profilePicture[0].originalname;
+      }
+      
+      if (files.document && files.document[0]) {
+        profileData.document = `/uploads/${files.document[0].filename}`;
+        profileData.documentOriginal = files.document[0].originalname;
+      }
+
+      const updatedProfile = await storage.updateProfile(profileId, profileData);
+      
+      if (!updatedProfile) {
+        return res.status(404).json({ message: 'Profile not found' });
+      }
+      
+      res.json(updatedProfile);
+    } catch (error) {
+      console.error('Profile update error:', error);
+      res.status(400).json({ message: 'Failed to update profile' });
+    }
+  });
+
+  // Delete profile
+  app.delete('/api/profiles/:id', requireAuth, async (req, res) => {
+    try {
+      const profileId = parseInt(req.params.id);
+      const success = await storage.deleteProfile(profileId);
+      
+      if (!success) {
+        return res.status(404).json({ message: 'Profile not found' });
+      }
+      
+      res.json({ message: 'Profile deleted successfully' });
+    } catch (error) {
+      console.error('Profile deletion error:', error);
+      res.status(500).json({ message: 'Failed to delete profile' });
+    }
+  });
+
   // Helper function to parse height
   const parseHeight = (height: string): number => {
     const match = height.match(/(\d+)'(\d+)"/);

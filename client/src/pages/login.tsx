@@ -185,13 +185,7 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <Card className="bg-gray-50">
-            <CardContent className="p-4">
-              <p className="text-sm text-gray-600 mb-2">Demo Credentials:</p>
-              <p className="text-sm font-mono">Email: {ADMIN_CREDENTIALS.username}</p>
-              <p className="text-sm font-mono">Password: {ADMIN_CREDENTIALS.password}</p>
-            </CardContent>
-          </Card>
+
         </DialogContent>
       </Dialog>
     </div>

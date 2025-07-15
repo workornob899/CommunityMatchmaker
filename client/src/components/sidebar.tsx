@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { BarChart3, Users, Settings, X } from "lucide-react";
+import { BarChart3, Users, Settings, X, UserCog } from "lucide-react";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -12,6 +12,7 @@ interface SidebarProps {
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: BarChart3 },
   { id: "profiles", label: "Profile Section", icon: Users },
+  { id: "profile-management", label: "Profile Management", icon: UserCog },
   { id: "settings", label: "Settings", icon: Settings },
 ];
 

@@ -315,7 +315,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                   accept="image/*"
                   onFileSelect={(file) => {
                     // Handle image upload for matching
-                    console.log("Image selected:", file);
+
                   }}
                   preview
                 >

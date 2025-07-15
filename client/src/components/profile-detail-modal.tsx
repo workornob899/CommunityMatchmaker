@@ -15,18 +15,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
   if (!profile || !profile.id) return null;
 
   // Debug: Log profile data to track what's being passed
-  console.log("ProfileDetailModal - Profile data:", {
-    id: profile.id,
-    name: profile.name,
-    age: profile.age,
-    gender: profile.gender,
-    profession: profile.profession,
-    qualification: profile.qualification,
-    height: profile.height,
-    birthYear: profile.birthYear,
-    hasDocument: !!profile.document,
-    hasProfilePicture: !!profile.profilePicture
-  });
+  // Profile data includes: id, name, age, gender, profession, qualification, height, birthYear, document, profilePicture
 
   const handleDownload = () => {
     try {

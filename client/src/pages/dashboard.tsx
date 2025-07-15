@@ -408,7 +408,7 @@ export default function Dashboard() {
         const downloadSuccess = downloadBlob(blob, filename);
 
         if (!downloadSuccess) {
-          console.log("Trying direct URL navigation fallback");
+
           const directUrl = `/api/profiles/${profile.id}/download-document`;
           window.location.href = directUrl;
         }
@@ -419,7 +419,7 @@ export default function Dashboard() {
           variant: "default",
         });
       } else {
-        console.log("No document found for profile:", profile);
+
         toast({
           title: "No Document",
           description: "This profile doesn't have a document to download",

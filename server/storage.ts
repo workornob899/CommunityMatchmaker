@@ -16,14 +16,15 @@ export interface IStorage {
   createProfile(profile: InsertProfile): Promise<Profile>;
   updateProfile(id: number, profile: Partial<InsertProfile>): Promise<Profile | undefined>;
   deleteProfile(id: number): Promise<boolean>;
-  searchProfiles(filters: Partial<{
-    gender: string;
-    profession: string;
-    birthYear: number;
-    height: string;
-    age: number;
-    date: string;
-  }>): Promise<Profile[]>;
+  searchProfiles(filters: {
+    gender?: string;
+    profession?: string;
+    maritalStatus?: string;
+    birthYear?: number;
+    height?: string;
+    age?: number;
+    date?: string;
+  }): Promise<Profile[]>;
   getProfilesByGender(gender: string): Promise<Profile[]>;
 
   // Match methods
@@ -99,7 +100,7 @@ export class DatabaseStorage implements IStorage {
   async createProfile(profile: InsertProfile): Promise<Profile> {
     // Generate unique profile ID
     const profileId = await this.generateUniqueProfileId();
-    
+
     const [newProfile] = await this.db
       .insert(profiles)
       .values({
@@ -114,23 +115,23 @@ export class DatabaseStorage implements IStorage {
   private async generateUniqueProfileId(): Promise<string> {
     let profileId: string;
     let isUnique = false;
-    
+
     while (!isUnique) {
       // Generate random 5-digit number
       const randomNumber = Math.floor(10000 + Math.random() * 90000);
       profileId = `GB-${randomNumber}`;
-      
+
       // Check if it already exists
       const [existing] = await this.db
         .select()
         .from(profiles)
         .where(eq(profiles.profileId, profileId));
-      
+
       if (!existing) {
         isUnique = true;
       }
     }
-    
+
     return profileId!;
   }
 
@@ -151,45 +152,50 @@ export class DatabaseStorage implements IStorage {
     return (result.rowCount || 0) > 0;
   }
 
-  async searchProfiles(filters: Partial<{
-    gender: string;
-    profession: string;
-    birthYear: number;
-    height: string;
-    age: number;
-    date: string;
-  }>): Promise<Profile[]> {
+  async searchProfiles(filters: {
+    gender?: string;
+    profession?: string;
+    maritalStatus?: string;
+    birthYear?: number;
+    height?: string;
+    age?: number;
+    date?: string;
+  }): Promise<Profile[]> {
     let query = this.db.select().from(profiles);
-    
+
     const conditions = [];
-    
+
     if (filters.gender) {
       conditions.push(eq(profiles.gender, filters.gender));
     }
-    
+
     if (filters.profession) {
       conditions.push(sql`${profiles.profession} ILIKE ${`%${filters.profession}%`}`);
     }
-    
+
     if (filters.birthYear) {
       conditions.push(eq(profiles.birthYear, filters.birthYear));
     }
-    
+
     if (filters.height) {
       conditions.push(eq(profiles.height, filters.height));
     }
-    
+
     if (filters.age) {
       const currentYear = new Date().getFullYear();
       const birthYear = currentYear - filters.age;
       conditions.push(eq(profiles.birthYear, birthYear));
     }
-    
+
+    if (filters.maritalStatus) {
+      conditions.push(eq(profiles.maritalStatus, filters.maritalStatus));
+    }
+
     if (conditions.length > 0) {
       const result = await query.where(and(...conditions)).orderBy(desc(profiles.createdAt));
       return result;
     }
-    
+
     return await query.orderBy(desc(profiles.createdAt));
   }
 
@@ -258,6 +264,7 @@ export class DatabaseStorage implements IStorage {
     return {
       totalProfiles: totalResult[0]?.count || 0,
       brideProfiles: brideResult[0]?.count || 0,
+      groomProfiles: groomResult[0]?.count || 0,
       groomProfiles: groomResult[0]?.count || 0,
     };
   }
@@ -397,38 +404,43 @@ export class MemoryStorage implements IStorage {
     return false;
   }
 
-  async searchProfiles(filters: Partial<{
-    gender: string;
-    profession: string;
-    birthYear: number;
-    height: string;
-    age: number;
-    date: string;
-  }>): Promise<Profile[]> {
+  async searchProfiles(filters: {
+    gender?: string;
+    profession?: string;
+    maritalStatus?: string;
+    birthYear?: number;
+    height?: string;
+    age?: number;
+    date?: string;
+  }): Promise<Profile[]> {
     let results = [...this.profiles];
-    
+
     if (filters.gender) {
       results = results.filter(p => p.gender === filters.gender);
     }
-    
+
     if (filters.profession) {
       results = results.filter(p => p.profession === filters.profession);
     }
-    
+
+    if (filters.maritalStatus) {
+      results = results.filter(p => p.maritalStatus === filters.maritalStatus);
+    }
+
     if (filters.birthYear) {
       results = results.filter(p => p.birthYear === filters.birthYear);
     }
-    
+
     if (filters.height) {
       results = results.filter(p => p.height === filters.height);
     }
-    
+
     if (filters.age) {
       const currentYear = new Date().getFullYear();
       const birthYear = currentYear - filters.age;
       results = results.filter(p => p.birthYear === birthYear);
     }
-    
+
     return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   }
 
@@ -455,7 +467,7 @@ export class MemoryStorage implements IStorage {
     const recentMatches = [...this.matches]
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
       .slice(0, 10);
-    
+
     return recentMatches.map(match => {
       const profile = this.profiles.find(p => p.id === match.profileId);
       const matchedProfile = this.profiles.find(p => p.id === match.matchedProfileId);
@@ -475,7 +487,7 @@ export class MemoryStorage implements IStorage {
     const totalProfiles = this.profiles.length;
     const brideProfiles = this.profiles.filter(p => p.gender === 'Female').length;
     const groomProfiles = this.profiles.filter(p => p.gender === 'Male').length;
-    
+
     return {
       totalProfiles,
       brideProfiles,
@@ -515,7 +527,7 @@ async function createStorage(): Promise<IStorage> {
   try {
     console.log("Attempting to initialize database storage...");
     const { db } = await import("./db");
-    
+
     // Test the database connection
     await db.select().from(users).limit(1);
     console.log("Database connection successful, using DatabaseStorage");

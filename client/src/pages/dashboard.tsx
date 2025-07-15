@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [showMatching, setShowMatching] = useState(false);
-  const [matchingType, setMatchingType] = useState<"bride" | "groom">("bride");
+  const [matchingType, setMatchingType<"bride" | "groom">("bride");
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
@@ -51,6 +51,7 @@ export default function Dashboard() {
     gender: "",
     profession: "",
     qualification: "",
+    maritalStatus: "",
     height: "",
     birthYear: "",
   });
@@ -80,6 +81,7 @@ export default function Dashboard() {
     gender: [GENDERS.MALE, GENDERS.FEMALE],
     age: AGE_OPTIONS,
     birthYear: BIRTH_YEAR_OPTIONS,
+    maritalStatus: ["Single", "Divorced", "Widowed", "Separated", "Other"],
   });
 
   // Function to refresh dynamic options
@@ -102,6 +104,7 @@ export default function Dashboard() {
         gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
         age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
         birthYear: Array.isArray(birthYearOptions) ? birthYearOptions : BIRTH_YEAR_OPTIONS,
+        maritalStatus: ["Single", "Divorced", "Widowed", "Separated", "Other"],
       });
     } catch (error) {
       console.error('Error refreshing dynamic options:', error);
@@ -113,6 +116,7 @@ export default function Dashboard() {
         gender: [GENDERS.MALE, GENDERS.FEMALE],
         age: AGE_OPTIONS,
         birthYear: BIRTH_YEAR_OPTIONS,
+        maritalStatus: ["Single", "Divorced", "Widowed", "Separated", "Other"],
       });
     }
   };
@@ -182,6 +186,7 @@ export default function Dashboard() {
         gender: "",
         profession: "",
         qualification: "",
+        maritalStatus: "",
         height: "",
         birthYear: "",
       });
@@ -290,6 +295,7 @@ export default function Dashboard() {
         gender: "",
         profession: "",
         qualification: "",
+        maritalStatus: "",
         height: "",
         birthYear: "",
       });
@@ -515,6 +521,7 @@ export default function Dashboard() {
       gender: profile.gender,
       profession: profile.profession || "",
       qualification: profile.qualification || "",
+      maritalStatus: profile.maritalStatus || "",
       height: profile.height,
       birthYear: profile.birthYear.toString(),
     });
@@ -926,7 +933,7 @@ export default function Dashboard() {
                             age: "all",
                             date: "",
                           });
-                          queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
                         }}
                         className="px-4 py-2"
                       >
@@ -1399,6 +1406,27 @@ export default function Dashboard() {
               </div>
 
               <div className="space-y-2">
+                <Label>Marital Status</Label>
+                <Select
+                  value={newProfile.maritalStatus}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, maritalStatus: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Marital Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.maritalStatus || []).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
                 <Label>Birth Year</Label>
                 <Select
                   value={newProfile.birthYear}
@@ -1574,6 +1602,27 @@ export default function Dashboard() {
                     {(dynamicOptions.qualification || []).map((qualification) => (
                       <SelectItem key={qualification} value={qualification}>
                         {qualification}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Marital Status</Label>
+                <Select
+                  value={newProfile.maritalStatus}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, maritalStatus: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Marital Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.maritalStatus || []).map((status) => (
+                      <SelectItem key={status} value={status}>
+                        {status}
                       </SelectItem>
                     ))}
                   </SelectContent>

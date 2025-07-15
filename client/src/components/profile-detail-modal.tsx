@@ -1,7 +1,6 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Download, User, Calendar, UserCheck, UserX, Briefcase, Ruler, X, GraduationCap } from "lucide-react";
+import { Download, User, Calendar, UserCheck, UserX, Briefcase, Ruler, X, GraduationCap, Heart } from "lucide-react";
 import { Profile } from "@shared/schema";
 
 interface ProfileDetailModalProps {
@@ -54,7 +53,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
         {/* Glassmorphism background */}
         <div className="absolute inset-0 bg-gradient-to-br from-white/60 via-white/40 to-blue-50/60 backdrop-blur-2xl -z-10" />
         <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/20 to-transparent -z-10" />
-        
+
         <DialogHeader className="relative pb-4 border-b border-white/30">
           <DialogTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent text-center">
             Profile Details
@@ -68,7 +67,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
             <X className="w-4 h-4 text-gray-600" />
           </Button>
         </DialogHeader>
-        
+
         <div className="space-y-6 pt-4 pb-4">
           {/* Profile Header Section */}
           <div className="flex flex-col items-center space-y-3">
@@ -87,7 +86,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                 )}
               </div>
             </div>
-            
+
             <div className="text-center">
               <p className="text-xs text-gray-500 font-mono mb-1">
                 {profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}
@@ -113,7 +112,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                     <p className="text-lg font-bold text-gray-800">{profile.age} years</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-blue-100/80 rounded-lg">
                     {profile.gender === "Male" ? (
@@ -151,7 +150,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                 )}
               </div>
             </div>
-            
+
             {/* Professional Information */}
             <div className="group bg-gradient-to-br from-purple-50/80 to-pink-50/80 backdrop-blur-sm rounded-xl p-4 shadow-md border border-purple-100/50 hover:shadow-lg transition-all duration-300">
               <h3 className="text-sm font-semibold text-purple-700 mb-3 uppercase tracking-wide">Professional</h3>
@@ -165,7 +164,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                     <p className="text-lg font-bold text-gray-800">{profile.profession || "Not provided"}</p>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center space-x-3">
                   <div className="p-2 bg-purple-100/80 rounded-lg">
                     <GraduationCap className="w-4 h-4 text-purple-600" />
@@ -191,7 +190,7 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
               Download
             </Button>
           )}
-          
+
           <Button
             variant="outline"
             onClick={handleClose}

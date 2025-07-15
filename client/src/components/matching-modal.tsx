@@ -41,6 +41,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
     profession: "",
     qualification: "",
     height: "",
+    maritalStatus: "", // Added maritalStatus here
   });
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
   const { toast } = useToast();
@@ -52,6 +53,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
     height: HEIGHT_OPTIONS,
     gender: [GENDERS.MALE, GENDERS.FEMALE],
     age: AGE_OPTIONS,
+    maritalStatus: ["Single", "Divorced", "Widowed", "Separated", "Other"], // Added maritalStatus options
   });
 
   // Function to refresh dynamic options
@@ -71,6 +73,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
         height: Array.isArray(heightOptions) ? heightOptions : HEIGHT_OPTIONS,
         gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
         age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
+        maritalStatus: ["Single", "Divorced", "Widowed", "Separated", "Other"], // Added maritalStatus options
       });
     } catch (error) {
       console.error('Error refreshing dynamic options:', error);
@@ -81,6 +84,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
         height: HEIGHT_OPTIONS,
         gender: [GENDERS.MALE, GENDERS.FEMALE],
         age: AGE_OPTIONS,
+        maritalStatus: ["Single", "Divorced", "Widowed", "Separated", "Other"], // Added maritalStatus options
       });
     }
   };
@@ -113,7 +117,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name || !formData.age || !formData.height) {
       toast({
         title: "Missing Information",
@@ -140,6 +144,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
       profession: formData.profession || undefined,
       qualification: formData.qualification || undefined,
       height: formData.height,
+      maritalStatus: formData.maritalStatus || undefined, // Include maritalStatus
     };
 
     setStep("searching");
@@ -155,6 +160,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
       profession: "",
       qualification: "",
       height: "",
+      maritalStatus: "", // reset maritalStatus
     });
     setMatchResult(null);
     onClose();
@@ -260,6 +266,25 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                       {(dynamicOptions.qualification || []).filter(Boolean).map((qualification, index) => (
                         <SelectItem key={`qualification-${index}-${qualification}`} value={qualification}>
                           {qualification}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="maritalStatus">Marital Status</Label>
+                  <Select
+                    value={formData.maritalStatus}
+                    onValueChange={(value) => setFormData({ ...formData, maritalStatus: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select marital status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(dynamicOptions.maritalStatus || []).filter(Boolean).map((status, index) => (
+                        <SelectItem key={`maritalStatus-${index}-${status}`} value={status}>
+                          {status}
                         </SelectItem>
                       ))}
                     </SelectContent>

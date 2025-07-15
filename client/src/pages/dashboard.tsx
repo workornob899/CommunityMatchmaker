@@ -368,7 +368,7 @@ export default function Dashboard() {
 
   const handleDownload = async (profile: Profile) => {
     try {
-      if (profile.documentPath) {
+      if (profile.document) {
         const response = await fetch(`/api/profiles/${profile.id}/download-document`, {
           credentials: "include",
         });

@@ -1066,6 +1066,7 @@ export default function Dashboard() {
                       <Table>
                         <TableHeader>
                           <TableRow>
+                            <TableHead>Picture</TableHead>
                             <TableHead>Date</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Profile ID</TableHead>
@@ -1079,6 +1080,7 @@ export default function Dashboard() {
                           {profilesLoading ? (
                             [...Array(5)].map((_, i) => (
                               <TableRow key={i}>
+                                <TableCell><div className="h-8 w-8 bg-gray-200 rounded-full animate-pulse"></div></TableCell>
                                 <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
                                 <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
                                 <TableCell><div className="h-4 bg-gray-200 rounded animate-pulse"></div></TableCell>
@@ -1091,12 +1093,25 @@ export default function Dashboard() {
                           ) : profileManagementResults.length > 0 ? (
                             profileManagementResults.map((profile) => (
                               <TableRow key={profile.id}>
+                                <TableCell>
+                                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                                    {profile.profilePicture ? (
+                                      <img
+                                        src={profile.profilePicture}
+                                        alt={profile.name}
+                                        className="w-full h-full object-cover"
+                                      />
+                                    ) : (
+                                      <User className="w-4 h-4 text-gray-400" />
+                                    )}
+                                  </div>
+                                </TableCell>
                                 <TableCell className="font-medium">
                                   {new Date(profile.createdAt).toLocaleDateString()}
                                 </TableCell>
                                 <TableCell>{profile.name}</TableCell>
                                 <TableCell>
-                                  <Badge variant="outline">{profile.profileId}</Badge>
+                                  <Badge variant="outline">{profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}</Badge>
                                 </TableCell>
                                 <TableCell>
                                   <Badge variant={profile.gender === "Female" ? "default" : "secondary"}>
@@ -1135,7 +1150,7 @@ export default function Dashboard() {
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={7} className="text-center py-8">
+                              <TableCell colSpan={8} className="text-center py-8">
                                 <div className="flex flex-col items-center">
                                   <Users className="w-12 h-12 text-gray-400 mb-4" />
                                   <h3 className="text-lg font-semibold text-gray-600 mb-2">

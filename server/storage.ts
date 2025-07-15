@@ -369,14 +369,36 @@ export class MemoryStorage implements IStorage {
   }
 
   async createProfile(profile: InsertProfile): Promise<Profile> {
+    const profileId = this.generateUniqueProfileId();
     const newProfile: Profile = {
       id: this.nextProfileId++,
       ...profile,
+      profileId,
       createdAt: new Date(),
       updatedAt: new Date()
     };
     this.profiles.push(newProfile);
     return newProfile;
+  }
+
+  private generateUniqueProfileId(): string {
+    let profileId: string;
+    let isUnique = false;
+    
+    while (!isUnique) {
+      // Generate random 5-digit number
+      const randomNumber = Math.floor(10000 + Math.random() * 90000);
+      profileId = `GB-${randomNumber}`;
+      
+      // Check if it already exists
+      const existing = this.profiles.find(p => p.profileId === profileId);
+      
+      if (!existing) {
+        isUnique = true;
+      }
+    }
+    
+    return profileId!;
   }
 
   async updateProfile(id: number, profile: Partial<InsertProfile>): Promise<Profile | undefined> {

@@ -23,7 +23,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, MARITAL_STATUS_OPTIONS, HEIGHT_OPTIONS, GENDERS, AGE_OPTIONS, BIRTH_YEAR_OPTIONS, getCombinedOptions } from "@/lib/constants";
+import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, HEIGHT_OPTIONS, GENDERS, AGE_OPTIONS, BIRTH_YEAR_OPTIONS, getCombinedOptions } from "@/lib/constants";
 import { Profile } from "@shared/schema";
 
 export default function Dashboard() {
@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [activeSection, setActiveSection] = useState("dashboard");
   const [showAddProfile, setShowAddProfile] = useState(false);
   const [showMatching, setShowMatching] = useState(false);
-  const [matchingType, setMatchingType<"bride" | "groom">("bride");
+  const [matchingType, setMatchingType] = useState<"bride" | "groom">("bride");
   const [selectedProfile, setSelectedProfile] = useState<Profile | null>(null);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [searchFilters, setSearchFilters] = useState({
@@ -51,7 +51,6 @@ export default function Dashboard() {
     gender: "",
     profession: "",
     qualification: "",
-    maritalStatus: "",
     height: "",
     birthYear: "",
   });
@@ -77,7 +76,6 @@ export default function Dashboard() {
   const [dynamicOptions, setDynamicOptions] = useState({
     profession: PROFESSION_OPTIONS,
     qualification: QUALIFICATION_OPTIONS,
-    maritalStatus: MARITAL_STATUS_OPTIONS,
     height: HEIGHT_OPTIONS,
     gender: [GENDERS.MALE, GENDERS.FEMALE],
     age: AGE_OPTIONS,
@@ -87,20 +85,19 @@ export default function Dashboard() {
   // Function to refresh dynamic options
   const refreshDynamicOptions = async () => {
     try {
-      const [professionOptions, qualificationOptions, maritalStatusOptions, heightOptions, genderOptions, ageOptions, birthYearOptions] = await Promise.all([
+      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions, birthYearOptions] = await Promise.all([
         getCombinedOptions('profession'),
         getCombinedOptions('qualification'),
-        getCombinedOptions('maritalStatus'),
         getCombinedOptions('height'),
         getCombinedOptions('gender'),
         getCombinedOptions('age'),
         getCombinedOptions('birthYear'),
       ]);
 
+      // Ensure all options are arrays and have valid values
       setDynamicOptions({
         profession: Array.isArray(professionOptions) ? professionOptions : PROFESSION_OPTIONS,
         qualification: Array.isArray(qualificationOptions) ? qualificationOptions : QUALIFICATION_OPTIONS,
-        maritalStatus: Array.isArray(maritalStatusOptions) ? maritalStatusOptions : MARITAL_STATUS_OPTIONS,
         height: Array.isArray(heightOptions) ? heightOptions : HEIGHT_OPTIONS,
         gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
         age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
@@ -112,7 +109,6 @@ export default function Dashboard() {
       setDynamicOptions({
         profession: PROFESSION_OPTIONS,
         qualification: QUALIFICATION_OPTIONS,
-        maritalStatus: MARITAL_STATUS_OPTIONS,
         height: HEIGHT_OPTIONS,
         gender: [GENDERS.MALE, GENDERS.FEMALE],
         age: AGE_OPTIONS,
@@ -186,7 +182,6 @@ export default function Dashboard() {
         gender: "",
         profession: "",
         qualification: "",
-        maritalStatus: "",
         height: "",
         birthYear: "",
       });
@@ -295,7 +290,6 @@ export default function Dashboard() {
         gender: "",
         profession: "",
         qualification: "",
-        maritalStatus: "",
         height: "",
         birthYear: "",
       });
@@ -521,7 +515,6 @@ export default function Dashboard() {
       gender: profile.gender,
       profession: profile.profession || "",
       qualification: profile.qualification || "",
-      maritalStatus: profile.maritalStatus || "",
       height: profile.height,
       birthYear: profile.birthYear.toString(),
     });
@@ -869,28 +862,6 @@ export default function Dashboard() {
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-sm font-medium text-gray-700">Marital Status</Label>
-                        <Select
-                          value={searchFilters.maritalStatus}
-                          onValueChange={(value) =>
-                            setSearchFilters({ ...searchFilters, maritalStatus: value })
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="All Marital Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">All Marital Status</SelectItem>
-                            {(dynamicOptions.maritalStatus || []).map((status) => (
-                              <SelectItem key={status} value={status}>
-                                {status}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Birth Year</Label>
                         <Select
                           value={searchFilters.birthYear}
@@ -931,7 +902,8 @@ export default function Dashboard() {
                               </SelectItem>
                             ))}
                           </SelectContent>
-                        </Select>                      </div>
+                        </Select>
+                      </div>
                     </div>
 
                     <div className="mt-6 flex items-center justify-between">
@@ -954,7 +926,7 @@ export default function Dashboard() {
                             age: "all",
                             date: "",
                           });
-queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
+                          queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
                         }}
                         className="px-4 py-2"
                       >
@@ -1275,12 +1247,11 @@ queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
                               }
                             >
                               <SelectTrigger>
-                                <SelectValue placeholder="Select Field Type" />
+                                <SelectValue placeholder="Select field type" />
                               </SelectTrigger>
                               <SelectContent>
                                 <SelectItem value="profession">Profession</SelectItem>
                                 <SelectItem value="qualification">Qualification</SelectItem>
-                                <SelectItem value="maritalStatus">Marital Status</SelectItem>
                                 <SelectItem value="height">Height</SelectItem>
                                 <SelectItem value="gender">Gender</SelectItem>
                                 <SelectItem value="age">Age</SelectItem>
@@ -1421,27 +1392,6 @@ queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
                     {(dynamicOptions.qualification || []).map((qualification) => (
                       <SelectItem key={qualification} value={qualification}>
                         {qualification}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Marital Status</Label>
-                <Select
-                  value={newProfile.maritalStatus}
-                  onValueChange={(value) =>
-                    setNewProfile({ ...newProfile, maritalStatus: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Marital Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(dynamicOptions.maritalStatus || []).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1624,27 +1574,6 @@ queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
                     {(dynamicOptions.qualification || []).map((qualification) => (
                       <SelectItem key={qualification} value={qualification}>
                         {qualification}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Marital Status</Label>
-                <Select
-                  value={newProfile.maritalStatus}
-                  onValueChange={(value) =>
-                    setNewProfile({ ...newProfile, maritalStatus: value })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Marital Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {(dynamicOptions.maritalStatus || []).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status}
                       </SelectItem>
                     ))}
                   </SelectContent>

@@ -70,6 +70,9 @@ export default function Dashboard() {
     value: "",
   });
 
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [profileToDelete, setProfileToDelete] = useState<{ id: number; name: string } | null>(null);
+
   const { user, updateEmail, updatePassword, logout } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -529,10 +532,22 @@ export default function Dashboard() {
     setShowEditModal(true);
   };
 
-  const handleDeleteProfile = (id: number) => {
-    if (window.confirm("Are you sure you want to delete this profile?")) {
-      deleteProfileMutation.mutate(id);
+  const handleDeleteProfile = (profile: Profile) => {
+    setProfileToDelete({ id: profile.id, name: profile.name });
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteProfile = () => {
+    if (profileToDelete) {
+      deleteProfileMutation.mutate(profileToDelete.id);
+      setShowDeleteModal(false);
+      setProfileToDelete(null);
     }
+  };
+
+  const cancelDeleteProfile = () => {
+    setShowDeleteModal(false);
+    setProfileToDelete(null);
   };
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
@@ -1137,7 +1152,7 @@ export default function Dashboard() {
                                         Edit Profile
                                       </DropdownMenuItem>
                                       <DropdownMenuItem 
-                                        onClick={() => handleDeleteProfile(profile.id)}
+                                        onClick={() => handleDeleteProfile(profile)}
                                         className="text-red-600"
                                       >
                                         <Trash2 className="w-4 h-4 mr-2" />
@@ -1748,6 +1763,40 @@ export default function Dashboard() {
         onClose={() => setIsProfileModalOpen(false)}
         onDownload={handleDownload}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={showDeleteModal} onOpenChange={setShowDeleteModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-red-600">Confirm Delete</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              Are you sure you want to delete <strong>{profileToDelete?.name}</strong>'s profile? 
+              This action cannot be undone.
+            </p>
+            <div className="flex justify-end space-x-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={cancelDeleteProfile}
+                disabled={deleteProfileMutation.isPending}
+              >
+                ❌ No, Cancel
+              </Button>
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={confirmDeleteProfile}
+                disabled={deleteProfileMutation.isPending}
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                {deleteProfileMutation.isPending ? "Deleting..." : "✅ Yes, Delete"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

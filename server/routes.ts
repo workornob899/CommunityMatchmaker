@@ -3,6 +3,7 @@ import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertProfileSchema, insertMatchSchema, insertCustomOptionSchema } from "@shared/schema";
+import { testConnection } from "./db";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
@@ -271,6 +272,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch profile statistics' });
+    }
+  });
+
+  // Database health monitoring endpoint
+  app.get('/api/health/database', requireAuth, async (req, res) => {
+    try {
+      const isHealthy = await testConnection();
+      const storageType = process.env.DATABASE_URL ? 'PostgreSQL' : 'Memory';
+      
+      res.json({
+        status: isHealthy ? 'healthy' : 'unhealthy',
+        storageType,
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV || 'development'
+      });
+    } catch (error) {
+      res.status(500).json({
+        status: 'error',
+        message: 'Database health check failed',
+        error: error.message,
+        timestamp: new Date().toISOString()
+      });
     }
   });
 

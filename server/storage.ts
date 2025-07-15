@@ -532,21 +532,62 @@ export class MemoryStorage implements IStorage {
   }
 }
 
-// Try to use database storage, fall back to memory storage if database fails
+// Production-grade database connection with security checks
 async function createStorage(): Promise<IStorage> {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
+  // Production safety check - never allow fallback to memory storage in production
+  if (isProduction && !process.env.DATABASE_URL) {
+    throw new Error(
+      "CRITICAL: DATABASE_URL is required in production. " +
+      "Application cannot start without persistent database connection."
+    );
+  }
+  
   try {
     console.log("Attempting to initialize database storage...");
     const { db } = await import("./db");
     
-    // Test the database connection
-    await db.select().from(users).limit(1);
-    console.log("Database connection successful, using DatabaseStorage");
-    return new DatabaseStorage(db);
+    // Test the database connection with retry logic
+    let connectionAttempts = 0;
+    const maxRetries = 3;
+    
+    while (connectionAttempts < maxRetries) {
+      try {
+        await db.select().from(users).limit(1);
+        console.log("Database connection successful, using DatabaseStorage");
+        return new DatabaseStorage(db);
+      } catch (retryError) {
+        connectionAttempts++;
+        console.log(`Database connection attempt ${connectionAttempts} failed:`, retryError.message);
+        
+        if (connectionAttempts < maxRetries) {
+          console.log(`Retrying in 2 seconds... (${connectionAttempts}/${maxRetries})`);
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+    }
+    
+    throw new Error(`Failed to connect to database after ${maxRetries} attempts`);
+    
   } catch (error) {
-    console.log("Database connection failed, using in-memory storage:", error.message);
-    const memStorage = new MemoryStorage();
-    console.log("MemoryStorage initialized successfully");
-    return memStorage;
+    if (isProduction) {
+      // In production, never fall back to memory storage
+      console.error("CRITICAL ERROR: Database connection failed in production");
+      console.error("Error details:", error.message);
+      throw new Error(
+        "Production database connection failed. " +
+        "Application cannot start without persistent database. " +
+        "Please check DATABASE_URL and database availability."
+      );
+    } else {
+      // Only allow fallback in development
+      console.log("Database connection failed, using in-memory storage:", error.message);
+      console.log("⚠️  WARNING: Using temporary memory storage in development");
+      const memStorage = new MemoryStorage();
+      console.log("MemoryStorage initialized successfully");
+      return memStorage;
+    }
   }
 }
 

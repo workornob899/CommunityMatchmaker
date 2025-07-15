@@ -5,6 +5,7 @@ export interface MatchingCriteria {
   age: number;
   gender: string;
   profession?: string;
+  maritalStatus?: string;
   height: string;
 }
 
@@ -76,6 +77,13 @@ export function calculateCompatibilityScore(
   // Add points for profession compatibility (if groom has profession)
   if (inputCriteria.profession && matchedProfile.profession) {
     score += 5;
+  }
+
+  // Add points for marital status preference
+  if (inputCriteria.maritalStatus && matchedProfile.maritalStatus) {
+    if (inputCriteria.maritalStatus === matchedProfile.maritalStatus) {
+      score += 3; // Bonus for matching marital status
+    }
   }
 
   // Add random variation for realistic scoring

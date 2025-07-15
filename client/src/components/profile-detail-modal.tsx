@@ -149,6 +149,18 @@ export function ProfileDetailModal({ profile, isOpen, onClose, onDownload }: Pro
                     </div>
                   </div>
                 )}
+
+                {profile.maritalStatus && (
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 bg-blue-100/80 rounded-lg">
+                      <UserCheck className="w-4 h-4 text-blue-600" />
+                    </div>
+                    <div>
+                      <span className="text-xs text-blue-600 font-medium">Marital Status</span>
+                      <p className="text-lg font-bold text-gray-800">{profile.maritalStatus}</p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             

@@ -84,6 +84,14 @@ export const BIRTH_YEAR_OPTIONS = [
   "2000", "2001", "2002", "2003", "2004", "2005", "2006"
 ];
 
+export const MARITAL_STATUS_OPTIONS = [
+  "Single",
+  "Divorced",
+  "Widowed",
+  "Separated",
+  "Other"
+];
+
 // Dynamic options fetching function
 export const fetchCustomOptions = async (fieldType: string) => {
   try {
@@ -116,6 +124,8 @@ export const getCombinedOptions = async (fieldType: string) => {
       return [...AGE_OPTIONS, ...customOptions];
     case 'birthYear':
       return [...BIRTH_YEAR_OPTIONS, ...customOptions];
+    case 'maritalStatus':
+      return [...MARITAL_STATUS_OPTIONS, ...customOptions];
     default:
       return customOptions;
   }

@@ -11,7 +11,7 @@ import { Heart, UserCheck, UserX, Calendar, Briefcase, Ruler, Star } from "lucid
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { GENDERS, HEIGHT_OPTIONS, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, AGE_OPTIONS, getCombinedOptions } from "@/lib/constants";
+import { GENDERS, HEIGHT_OPTIONS, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, AGE_OPTIONS, MARITAL_STATUS_OPTIONS, getCombinedOptions } from "@/lib/constants";
 import { Profile } from "@shared/schema";
 
 interface MatchingModalProps {
@@ -40,6 +40,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
     gender: type === "bride" ? GENDERS.FEMALE : GENDERS.MALE,
     profession: "",
     qualification: "",
+    maritalStatus: "",
     height: "",
   });
   const [matchResult, setMatchResult] = useState<MatchResult | null>(null);
@@ -52,17 +53,19 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
     height: HEIGHT_OPTIONS,
     gender: [GENDERS.MALE, GENDERS.FEMALE],
     age: AGE_OPTIONS,
+    maritalStatus: MARITAL_STATUS_OPTIONS,
   });
 
   // Function to refresh dynamic options
   const refreshDynamicOptions = async () => {
     try {
-      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions] = await Promise.all([
+      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions, maritalStatusOptions] = await Promise.all([
         getCombinedOptions('profession'),
         getCombinedOptions('qualification'),
         getCombinedOptions('height'),
         getCombinedOptions('gender'),
         getCombinedOptions('age'),
+        getCombinedOptions('maritalStatus'),
       ]);
 
       setDynamicOptions({
@@ -71,6 +74,7 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
         height: Array.isArray(heightOptions) ? heightOptions : HEIGHT_OPTIONS,
         gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
         age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
+        maritalStatus: Array.isArray(maritalStatusOptions) ? maritalStatusOptions : MARITAL_STATUS_OPTIONS,
       });
     } catch (error) {
       console.error('Error refreshing dynamic options:', error);
@@ -266,7 +270,24 @@ export function MatchingModal({ isOpen, onClose, type }: MatchingModalProps) {
                   </Select>
                 </div>
 
-                <div className="md:col-span-2 space-y-2"></div>
+                <div className="space-y-2">
+                  <Label htmlFor="maritalStatus">Marital Status</Label>
+                  <Select
+                    value={formData.maritalStatus}
+                    onValueChange={(value) => setFormData({ ...formData, maritalStatus: value })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select marital status (optional)" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {(dynamicOptions.maritalStatus || []).filter(Boolean).map((maritalStatus, index) => (
+                        <SelectItem key={`maritalStatus-${index}-${maritalStatus}`} value={maritalStatus}>
+                          {maritalStatus}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <div className="md:col-span-2 space-y-2">
                   <Label htmlFor="height">Height *</Label>

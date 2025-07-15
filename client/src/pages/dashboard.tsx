@@ -23,7 +23,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, HEIGHT_OPTIONS, GENDERS, AGE_OPTIONS, BIRTH_YEAR_OPTIONS, getCombinedOptions } from "@/lib/constants";
+import { LOGO_URL, PROFESSION_OPTIONS, QUALIFICATION_OPTIONS, HEIGHT_OPTIONS, GENDERS, AGE_OPTIONS, BIRTH_YEAR_OPTIONS, MARITAL_STATUS_OPTIONS, getCombinedOptions } from "@/lib/constants";
 import { Profile } from "@shared/schema";
 
 export default function Dashboard() {
@@ -39,6 +39,7 @@ export default function Dashboard() {
     profession: "all",
     birthYear: "all",
     age: "all",
+    maritalStatus: "all",
     date: "",
   });
   const [profileIdSearch, setProfileIdSearch] = useState("");
@@ -51,6 +52,7 @@ export default function Dashboard() {
     gender: "",
     profession: "",
     qualification: "",
+    maritalStatus: "",
     height: "",
     birthYear: "",
   });
@@ -80,18 +82,20 @@ export default function Dashboard() {
     gender: [GENDERS.MALE, GENDERS.FEMALE],
     age: AGE_OPTIONS,
     birthYear: BIRTH_YEAR_OPTIONS,
+    maritalStatus: MARITAL_STATUS_OPTIONS,
   });
 
   // Function to refresh dynamic options
   const refreshDynamicOptions = async () => {
     try {
-      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions, birthYearOptions] = await Promise.all([
+      const [professionOptions, qualificationOptions, heightOptions, genderOptions, ageOptions, birthYearOptions, maritalStatusOptions] = await Promise.all([
         getCombinedOptions('profession'),
         getCombinedOptions('qualification'),
         getCombinedOptions('height'),
         getCombinedOptions('gender'),
         getCombinedOptions('age'),
         getCombinedOptions('birthYear'),
+        getCombinedOptions('maritalStatus'),
       ]);
 
       // Ensure all options are arrays and have valid values
@@ -102,6 +106,7 @@ export default function Dashboard() {
         gender: Array.isArray(genderOptions) ? genderOptions : [GENDERS.MALE, GENDERS.FEMALE],
         age: Array.isArray(ageOptions) ? ageOptions : AGE_OPTIONS,
         birthYear: Array.isArray(birthYearOptions) ? birthYearOptions : BIRTH_YEAR_OPTIONS,
+        maritalStatus: Array.isArray(maritalStatusOptions) ? maritalStatusOptions : MARITAL_STATUS_OPTIONS,
       });
     } catch (error) {
       console.error('Error refreshing dynamic options:', error);
@@ -113,6 +118,7 @@ export default function Dashboard() {
         gender: [GENDERS.MALE, GENDERS.FEMALE],
         age: AGE_OPTIONS,
         birthYear: BIRTH_YEAR_OPTIONS,
+        maritalStatus: MARITAL_STATUS_OPTIONS,
       });
     }
   };
@@ -862,6 +868,28 @@ export default function Dashboard() {
                       </div>
 
                       <div className="space-y-2">
+                        <Label className="text-sm font-medium text-gray-700">Marital Status</Label>
+                        <Select
+                          value={searchFilters.maritalStatus}
+                          onValueChange={(value) =>
+                            setSearchFilters({ ...searchFilters, maritalStatus: value })
+                          }
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Select Marital Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Marital Status</SelectItem>
+                            {(dynamicOptions.maritalStatus || []).filter(Boolean).map((maritalStatus, index) => (
+                              <SelectItem key={`maritalStatus-${index}-${maritalStatus}`} value={maritalStatus}>
+                                {maritalStatus}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
                         <Label className="text-sm font-medium text-gray-700">Birth Year</Label>
                         <Select
                           value={searchFilters.birthYear}
@@ -924,6 +952,7 @@ export default function Dashboard() {
                             profession: "all",
                             birthYear: "all",
                             age: "all",
+                            maritalStatus: "all",
                             date: "",
                           });
                           queryClient.invalidateQueries({ queryKey: ["/api/profiles"] });
@@ -1256,6 +1285,7 @@ export default function Dashboard() {
                                 <SelectItem value="gender">Gender</SelectItem>
                                 <SelectItem value="age">Age</SelectItem>
                                 <SelectItem value="birthYear">Birth Year</SelectItem>
+                                <SelectItem value="maritalStatus">Marital Status</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1392,6 +1422,27 @@ export default function Dashboard() {
                     {(dynamicOptions.qualification || []).map((qualification) => (
                       <SelectItem key={qualification} value={qualification}>
                         {qualification}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Marital Status</Label>
+                <Select
+                  value={newProfile.maritalStatus}
+                  onValueChange={(value) =>
+                    setNewProfile({ ...newProfile, maritalStatus: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Marital Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(dynamicOptions.maritalStatus || []).map((maritalStatus) => (
+                      <SelectItem key={maritalStatus} value={maritalStatus}>
+                        {maritalStatus}
                       </SelectItem>
                     ))}
                   </SelectContent>

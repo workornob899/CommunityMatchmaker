@@ -92,7 +92,7 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
               </div>
             </div>
 
-            {/* Second Row: Qualification, Height, ID */}
+            {/* Second Row: Qualification, Marital Status, Height */}
             <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
               <div className="flex flex-col items-center text-center">
                 <Briefcase className="w-4 h-4 mb-1 text-gray-500" />
@@ -100,13 +100,13 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
               </div>
               
               <div className="flex flex-col items-center text-center">
-                <Ruler className="w-4 h-4 mb-1 text-gray-500" />
-                <span className="font-medium truncate">{profile.height}</span>
+                <UserCheck className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.maritalStatus || "N/A"}</span>
               </div>
               
               <div className="flex flex-col items-center text-center">
-                <User className="w-4 h-4 mb-1 text-gray-500" />
-                <span className="font-medium truncate text-xs">{profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}</span>
+                <Ruler className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.height}</span>
               </div>
             </div>
             

@@ -83,45 +83,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const profileId = parseInt(req.params.id);
       console.log(`Download request for profile ID: ${profileId}`);
-
+      
       const profile = await storage.getProfile(profileId);
-
+      
       if (!profile) {
         console.log(`Profile not found: ${profileId}`);
         return res.status(404).json({ message: 'Profile not found' });
       }
-
+      
       if (!profile.document) {
         console.log(`No document found for profile: ${profileId}`);
         return res.status(404).json({ message: 'No document found for this profile' });
       }
-
+      
       // Get the file path (remove /uploads prefix)
       const fileName = profile.document.replace('/uploads/', '');
       const filePath = path.join(uploadDir, fileName);
-
+      
       console.log(`Looking for file at: ${filePath}`);
       console.log(`Original document name: ${profile.documentOriginal}`);
-
+      
       // Check if file exists
       if (!fs.existsSync(filePath)) {
         console.log(`File does not exist: ${filePath}`);
         return res.status(404).json({ message: 'Document file not found' });
       }
-
+      
       // Set the proper filename for download
       const originalName = profile.documentOriginal || `document_${profile.id}`;
       console.log(`Setting download filename to: ${originalName}`);
-
+      
       res.setHeader('Content-Disposition', `attachment; filename="${originalName}"`);
       res.setHeader('Content-Type', 'application/octet-stream');
-
+      
       // Stream the file
       const fileStream = fs.createReadStream(filePath);
       fileStream.pipe(res);
-
+      
       console.log(`File download started for: ${originalName}`);
-
+      
     } catch (error) {
       console.error('Document download error:', error);
       res.status(500).json({ message: 'Failed to download document' });
@@ -234,7 +234,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gender: req.body.gender,
         profession: req.body.profession || null,
         qualification: req.body.qualification || null,
-        maritalStatus: req.body.maritalStatus || null,
         height: req.body.height,
         birthYear: parseInt(req.body.birthYear),
         profilePicture: null as string | null,
@@ -245,12 +244,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle file uploads
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
+      
       if (files.profilePicture && files.profilePicture[0]) {
         profileData.profilePicture = `/uploads/${files.profilePicture[0].filename}`;
         profileData.profilePictureOriginal = files.profilePicture[0].originalname;
       }
-
+      
       if (files.document && files.document[0]) {
         profileData.document = `/uploads/${files.document[0].filename}`;
         profileData.documentOriginal = files.document[0].originalname;
@@ -258,7 +257,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const validatedData = insertProfileSchema.parse(profileData);
       const profile = await storage.createProfile(validatedData);
-
+      
       res.status(201).json(profile);
     } catch (error) {
       console.error('Profile creation error:', error);
@@ -288,7 +287,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gender: req.body.gender,
         profession: req.body.profession || null,
         qualification: req.body.qualification || null,
-        maritalStatus: req.body.maritalStatus || null,
         height: req.body.height,
         birthYear: parseInt(req.body.birthYear),
         profilePicture: null as string | null,
@@ -299,23 +297,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Handle file uploads
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-
+      
       if (files.profilePicture && files.profilePicture[0]) {
         profileData.profilePicture = `/uploads/${files.profilePicture[0].filename}`;
         profileData.profilePictureOriginal = files.profilePicture[0].originalname;
       }
-
+      
       if (files.document && files.document[0]) {
         profileData.document = `/uploads/${files.document[0].filename}`;
         profileData.documentOriginal = files.document[0].originalname;
       }
 
       const updatedProfile = await storage.updateProfile(profileId, profileData);
-
+      
       if (!updatedProfile) {
         return res.status(404).json({ message: 'Profile not found' });
       }
-
+      
       res.json(updatedProfile);
     } catch (error) {
       console.error('Profile update error:', error);
@@ -328,11 +326,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const profileId = parseInt(req.params.id);
       const success = await storage.deleteProfile(profileId);
-
+      
       if (!success) {
         return res.status(404).json({ message: 'Profile not found' });
       }
-
+      
       res.json({ message: 'Profile deleted successfully' });
     } catch (error) {
       console.error('Profile deletion error:', error);
@@ -359,16 +357,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/match', requireAuth, async (req, res) => {
     try {
       const { name, age, gender, profession, height } = req.body;
-
+      
       // Validate groom profession requirement
       if (gender === 'Male' && !profession) {
         return res.status(400).json({ message: 'Groom profession is mandatory' });
       }
-
+      
       // Find opposite gender profiles
       const oppositeGender = gender === 'Male' ? 'Female' : 'Male';
       const candidateProfiles = await storage.getProfilesByGender(oppositeGender);
-
+      
       // Apply exact matching logic
       const compatibleProfiles = candidateProfiles.filter(profile => {
         const inputHeightInches = parseHeight(height);
@@ -379,7 +377,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Bride should be 3-6 years younger and 6-8 inches shorter
           const ageDiff = age - profile.age;
           const heightDiff = inputHeightInches - candidateHeightInches;
-
+          
           return ageDiff >= 3 && ageDiff <= 6 && heightDiff >= 6 && heightDiff <= 8;
         } else {
           // Female (Bride) looking for male (Groom)
@@ -391,7 +389,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const ageDiff = profile.age - age;
           const heightDiff = candidateHeightInches - inputHeightInches;
-
+          
           return ageDiff >= 3 && ageDiff <= 6 && heightDiff >= 6 && heightDiff <= 8;
         }
       });
@@ -421,13 +419,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (recentMatches.length > MAX_RECENT_MATCHES) {
         recentMatches.shift(); // Remove oldest
       }
-
+      
       // Calculate compatibility score (based on age and height compatibility)
       const compatibilityScore = Math.floor(Math.random() * 15) + 85; // 85-100%
 
       // Store the match if profiles exist
       const inputProfile = { name, age, gender, profession, height, birthYear: new Date().getFullYear() - age };
-
+      
       res.json({
         inputProfile,
         matchedProfile: randomMatch,
@@ -444,11 +442,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email } = req.body;
       const user = await storage.updateUserEmail(req.session.userId!, email);
-
+      
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
-
+      
       res.json({ user: { id: user.id, username: user.username, email: user.email } });
     } catch (error) {
       res.status(500).json({ message: 'Failed to update email' });
@@ -458,7 +456,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/user/password', requireAuth, async (req, res) => {
     try {
       const { currentPassword, newPassword } = req.body;
-
+      
       const user = await storage.getUser(req.session.userId!);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -468,11 +466,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (user.username === 'admin12345') {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
         const updatedUser = await storage.updateUserPassword(user.id, hashedPassword);
-
+        
         if (!updatedUser) {
           return res.status(500).json({ message: 'Failed to update password' });
         }
-
+        
         res.json({ message: 'Password updated successfully' });
       } else {
         res.status(400).json({ message: 'Password change not allowed for this user' });

@@ -131,27 +131,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth routes
   app.post('/api/auth/login', async (req, res) => {
     try {
+      console.log('Login attempt:', req.body);
       const { username, password } = req.body;
 
       // Check hardcoded admin credentials
       if (username === 'admin12345' && password === 'admin12345') {
+        console.log('Admin credentials valid, looking for user...');
         // Create or get admin user
         let user = await storage.getUserByUsername(username);
+        console.log('Found user:', user ? 'Yes' : 'No');
         if (!user) {
+          console.log('Creating new admin user...');
           const hashedPassword = await bcrypt.hash(password, 10);
           user = await storage.createUser({
             username,
             password: hashedPassword,
             email: 'admin12345',
           });
+          console.log('Created user:', user);
         }
 
         req.session.userId = user.id;
+        console.log('Set session userId:', user.id);
         res.json({ user: { id: user.id, username: user.username, email: user.email } });
       } else {
+        console.log('Invalid credentials provided');
         res.status(401).json({ message: 'Invalid credentials' });
       }
     } catch (error) {
+      console.error('Login error:', error);
       res.status(500).json({ message: 'Login failed' });
     }
   });

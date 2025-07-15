@@ -1,6 +1,6 @@
 import { users, profiles, matches, customOptions, type User, type InsertUser, type Profile, type InsertProfile, type Match, type InsertMatch, type CustomOption, type InsertCustomOption } from "@shared/schema";
-import { db } from "./db";
 import { eq, and, or, desc, sql } from "drizzle-orm";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User methods
@@ -45,18 +45,24 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
+  private db: any;
+
+  constructor(database: any) {
+    this.db = database;
+  }
+
   async getUser(id: number): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
+    const [user] = await this.db.select().from(users).where(eq(users.id, id));
     return user || undefined;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+    const [user] = await this.db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db
+    const [user] = await this.db
       .insert(users)
       .values(insertUser)
       .returning();
@@ -64,7 +70,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserEmail(id: number, email: string): Promise<User | undefined> {
-    const [user] = await db
+    const [user] = await this.db
       .update(users)
       .set({ email })
       .where(eq(users.id, id))
@@ -73,7 +79,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateUserPassword(id: number, password: string): Promise<User | undefined> {
-    const [user] = await db
+    const [user] = await this.db
       .update(users)
       .set({ password })
       .where(eq(users.id, id))
@@ -82,11 +88,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllProfiles(): Promise<Profile[]> {
-    return await db.select().from(profiles).orderBy(desc(profiles.createdAt));
+    return await this.db.select().from(profiles).orderBy(desc(profiles.createdAt));
   }
 
   async getProfile(id: number): Promise<Profile | undefined> {
-    const [profile] = await db.select().from(profiles).where(eq(profiles.id, id));
+    const [profile] = await this.db.select().from(profiles).where(eq(profiles.id, id));
     return profile || undefined;
   }
 
@@ -94,7 +100,7 @@ export class DatabaseStorage implements IStorage {
     // Generate unique profile ID
     const profileId = await this.generateUniqueProfileId();
     
-    const [newProfile] = await db
+    const [newProfile] = await this.db
       .insert(profiles)
       .values({
         ...profile,
@@ -115,7 +121,7 @@ export class DatabaseStorage implements IStorage {
       profileId = `GB-${randomNumber}`;
       
       // Check if it already exists
-      const [existing] = await db
+      const [existing] = await this.db
         .select()
         .from(profiles)
         .where(eq(profiles.profileId, profileId));
@@ -129,7 +135,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProfile(id: number, profile: Partial<InsertProfile>): Promise<Profile | undefined> {
-    const [updatedProfile] = await db
+    const [updatedProfile] = await this.db
       .update(profiles)
       .set({
         ...profile,
@@ -141,7 +147,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProfile(id: number): Promise<boolean> {
-    const result = await db.delete(profiles).where(eq(profiles.id, id));
+    const result = await this.db.delete(profiles).where(eq(profiles.id, id));
     return (result.rowCount || 0) > 0;
   }
 
@@ -153,7 +159,7 @@ export class DatabaseStorage implements IStorage {
     age: number;
     date: string;
   }>): Promise<Profile[]> {
-    let query = db.select().from(profiles);
+    let query = this.db.select().from(profiles);
     
     const conditions = [];
     
@@ -188,11 +194,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getProfilesByGender(gender: string): Promise<Profile[]> {
-    return await db.select().from(profiles).where(eq(profiles.gender, gender));
+    return await this.db.select().from(profiles).where(eq(profiles.gender, gender));
   }
 
   async createMatch(match: InsertMatch): Promise<Match> {
-    const [newMatch] = await db
+    const [newMatch] = await this.db
       .insert(matches)
       .values(match)
       .returning();
@@ -200,7 +206,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getMatchesForProfile(profileId: number): Promise<Match[]> {
-    return await db.select().from(matches).where(
+    return await this.db.select().from(matches).where(
       or(
         eq(matches.profileId, profileId),
         eq(matches.matchedProfileId, profileId)
@@ -209,7 +215,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentMatches(): Promise<Array<Match & { profile: Profile; matchedProfile: Profile }>> {
-    const result = await db
+    const result = await this.db
       .select({
         match: matches,
         profile: profiles,
@@ -245,9 +251,9 @@ export class DatabaseStorage implements IStorage {
     brideProfiles: number;
     groomProfiles: number;
   }> {
-    const totalResult = await db.select({ count: sql<number>`count(*)` }).from(profiles);
-    const brideResult = await db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.gender, 'Female'));
-    const groomResult = await db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.gender, 'Male'));
+    const totalResult = await this.db.select({ count: sql<number>`count(*)` }).from(profiles);
+    const brideResult = await this.db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.gender, 'Female'));
+    const groomResult = await this.db.select({ count: sql<number>`count(*)` }).from(profiles).where(eq(profiles.gender, 'Male'));
 
     return {
       totalProfiles: totalResult[0]?.count || 0,
@@ -258,7 +264,7 @@ export class DatabaseStorage implements IStorage {
 
   // Custom options methods
   async getCustomOptions(fieldType: string): Promise<CustomOption[]> {
-    return await db
+    return await this.db
       .select()
       .from(customOptions)
       .where(eq(customOptions.fieldType, fieldType))
@@ -266,7 +272,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createCustomOption(option: InsertCustomOption): Promise<CustomOption> {
-    const [newOption] = await db
+    const [newOption] = await this.db
       .insert(customOptions)
       .values(option)
       .returning();
@@ -274,9 +280,252 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCustomOption(id: number): Promise<boolean> {
-    const result = await db.delete(customOptions).where(eq(customOptions.id, id));
+    const result = await this.db.delete(customOptions).where(eq(customOptions.id, id));
     return (result.rowCount || 0) > 0;
   }
 }
 
-export const storage = new DatabaseStorage();
+// In-memory storage for development/migration
+export class MemoryStorage implements IStorage {
+  private users: User[] = [];
+  private profiles: Profile[] = [];
+  private matches: Match[] = [];
+  private customOptions: CustomOption[] = [];
+  private nextUserId = 1;
+  private nextProfileId = 1;
+  private nextMatchId = 1;
+  private nextCustomOptionId = 1;
+
+  private initialized = false;
+
+  constructor() {
+    // Initialize with admin user
+    this.initializeAdminUser();
+  }
+
+  private async initializeAdminUser() {
+    if (!this.initialized) {
+      const hashedPassword = await bcrypt.hash('admin12345', 10);
+      this.users.push({
+        id: this.nextUserId++,
+        username: 'admin12345',
+        email: 'admin@ghotokbari.com',
+        password: hashedPassword,
+        createdAt: new Date(),
+        updatedAt: new Date()
+      });
+      this.initialized = true;
+    }
+  }
+
+  async getUser(id: number): Promise<User | undefined> {
+    return this.users.find(u => u.id === id);
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    if (!this.initialized) {
+      await this.initializeAdminUser();
+    }
+    return this.users.find(u => u.username === username);
+  }
+
+  async createUser(user: InsertUser): Promise<User> {
+    const newUser: User = {
+      id: this.nextUserId++,
+      ...user,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.users.push(newUser);
+    return newUser;
+  }
+
+  async updateUserEmail(id: number, email: string): Promise<User | undefined> {
+    const user = this.users.find(u => u.id === id);
+    if (user) {
+      user.email = email;
+      user.updatedAt = new Date();
+      return user;
+    }
+    return undefined;
+  }
+
+  async updateUserPassword(id: number, password: string): Promise<User | undefined> {
+    const user = this.users.find(u => u.id === id);
+    if (user) {
+      user.password = password;
+      user.updatedAt = new Date();
+      return user;
+    }
+    return undefined;
+  }
+
+  async getAllProfiles(): Promise<Profile[]> {
+    return [...this.profiles].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getProfile(id: number): Promise<Profile | undefined> {
+    return this.profiles.find(p => p.id === id);
+  }
+
+  async createProfile(profile: InsertProfile): Promise<Profile> {
+    const newProfile: Profile = {
+      id: this.nextProfileId++,
+      ...profile,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.profiles.push(newProfile);
+    return newProfile;
+  }
+
+  async updateProfile(id: number, profile: Partial<InsertProfile>): Promise<Profile | undefined> {
+    const existingProfile = this.profiles.find(p => p.id === id);
+    if (existingProfile) {
+      Object.assign(existingProfile, profile, { updatedAt: new Date() });
+      return existingProfile;
+    }
+    return undefined;
+  }
+
+  async deleteProfile(id: number): Promise<boolean> {
+    const index = this.profiles.findIndex(p => p.id === id);
+    if (index !== -1) {
+      this.profiles.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+
+  async searchProfiles(filters: Partial<{
+    gender: string;
+    profession: string;
+    birthYear: number;
+    height: string;
+    age: number;
+    date: string;
+  }>): Promise<Profile[]> {
+    let results = [...this.profiles];
+    
+    if (filters.gender) {
+      results = results.filter(p => p.gender === filters.gender);
+    }
+    
+    if (filters.profession) {
+      results = results.filter(p => p.profession === filters.profession);
+    }
+    
+    if (filters.birthYear) {
+      results = results.filter(p => p.birthYear === filters.birthYear);
+    }
+    
+    if (filters.height) {
+      results = results.filter(p => p.height === filters.height);
+    }
+    
+    if (filters.age) {
+      const currentYear = new Date().getFullYear();
+      const birthYear = currentYear - filters.age;
+      results = results.filter(p => p.birthYear === birthYear);
+    }
+    
+    return results.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
+  async getProfilesByGender(gender: string): Promise<Profile[]> {
+    return this.profiles.filter(p => p.gender === gender);
+  }
+
+  async createMatch(match: InsertMatch): Promise<Match> {
+    const newMatch: Match = {
+      id: this.nextMatchId++,
+      ...match,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.matches.push(newMatch);
+    return newMatch;
+  }
+
+  async getMatchesForProfile(profileId: number): Promise<Match[]> {
+    return this.matches.filter(m => m.profileId === profileId || m.matchedProfileId === profileId);
+  }
+
+  async getRecentMatches(): Promise<Array<Match & { profile: Profile; matchedProfile: Profile }>> {
+    const recentMatches = [...this.matches]
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+      .slice(0, 10);
+    
+    return recentMatches.map(match => {
+      const profile = this.profiles.find(p => p.id === match.profileId);
+      const matchedProfile = this.profiles.find(p => p.id === match.matchedProfileId);
+      return {
+        ...match,
+        profile: profile!,
+        matchedProfile: matchedProfile!
+      };
+    }).filter(item => item.profile && item.matchedProfile);
+  }
+
+  async getProfileStats(): Promise<{
+    totalProfiles: number;
+    brideProfiles: number;
+    groomProfiles: number;
+  }> {
+    const totalProfiles = this.profiles.length;
+    const brideProfiles = this.profiles.filter(p => p.gender === 'Female').length;
+    const groomProfiles = this.profiles.filter(p => p.gender === 'Male').length;
+    
+    return {
+      totalProfiles,
+      brideProfiles,
+      groomProfiles
+    };
+  }
+
+  async getCustomOptions(fieldType: string): Promise<CustomOption[]> {
+    return this.customOptions
+      .filter(co => co.fieldType === fieldType)
+      .sort((a, b) => a.value.localeCompare(b.value));
+  }
+
+  async createCustomOption(option: InsertCustomOption): Promise<CustomOption> {
+    const newOption: CustomOption = {
+      id: this.nextCustomOptionId++,
+      ...option,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+    this.customOptions.push(newOption);
+    return newOption;
+  }
+
+  async deleteCustomOption(id: number): Promise<boolean> {
+    const index = this.customOptions.findIndex(co => co.id === id);
+    if (index !== -1) {
+      this.customOptions.splice(index, 1);
+      return true;
+    }
+    return false;
+  }
+}
+
+// Try to use database storage, fall back to memory storage if database fails
+async function createStorage(): Promise<IStorage> {
+  try {
+    console.log("Attempting to initialize database storage...");
+    const { db } = await import("./db");
+    
+    // Test the database connection
+    await db.select().from(users).limit(1);
+    console.log("Database connection successful, using DatabaseStorage");
+    return new DatabaseStorage(db);
+  } catch (error) {
+    console.log("Database connection failed, using in-memory storage:", error.message);
+    const memStorage = new MemoryStorage();
+    console.log("MemoryStorage initialized successfully");
+    return memStorage;
+  }
+}
+
+export const storage = await createStorage();

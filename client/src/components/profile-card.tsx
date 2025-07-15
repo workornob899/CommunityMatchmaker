@@ -1,7 +1,6 @@
-
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, User, Calendar, UserCheck, UserX, Briefcase, Ruler } from "lucide-react";
+import { Download, User, Calendar, UserCheck, UserX, Briefcase, Ruler, Heart } from "lucide-react";
 import { Profile } from "@shared/schema";
 
 interface ProfileCardProps {
@@ -58,7 +57,7 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
               </div>
             )}
           </div>
-          
+
           {/* Right Side - Details */}
           <div className="flex-1 p-5 relative bg-gradient-to-br from-white to-gray-50">
             <div className="mb-2">
@@ -69,7 +68,7 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
             <h3 className="text-xl font-bold text-gray-800 mb-4 truncate group-hover:text-blue-600 transition-colors duration-300">
               {profile.name}
             </h3>
-            
+
             {/* First Row: Gender, Age, Profession */}
             <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
               <div className="flex flex-col items-center text-center">
@@ -80,36 +79,36 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
                 )}
                 <span className="font-semibold text-gray-700 truncate">{profile.gender}</span>
               </div>
-              
+
               <div className="flex flex-col items-center text-center">
                 <Calendar className="w-4 h-4 mb-1 text-gray-500" />
                 <span className="font-medium truncate">{profile.age} years</span>
               </div>
-              
+
               <div className="flex flex-col items-center text-center">
                 <Briefcase className="w-4 h-4 mb-1 text-gray-500" />
                 <span className="font-medium truncate">{profile.profession || "N/A"}</span>
               </div>
             </div>
 
-            {/* Second Row: Qualification, Height, ID */}
+            {/* Second Row: Qualification, Height, Marital Status */}
             <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
               <div className="flex flex-col items-center text-center">
                 <Briefcase className="w-4 h-4 mb-1 text-gray-500" />
                 <span className="font-medium truncate">{profile.qualification || "N/A"}</span>
               </div>
-              
+
               <div className="flex flex-col items-center text-center">
                 <Ruler className="w-4 h-4 mb-1 text-gray-500" />
                 <span className="font-medium truncate">{profile.height}</span>
               </div>
-              
+
               <div className="flex flex-col items-center text-center">
                 <User className="w-4 h-4 mb-1 text-gray-500" />
-                <span className="font-medium truncate text-xs">{profile.profileId || `GB-${String(profile.id).padStart(5, '0')}`}</span>
+                <span className="font-medium truncate">{profile.maritalStatus || "N/A"}</span>
               </div>
             </div>
-            
+
             {/* Bottom-right Download Button */}
             {profile.document && (
               <div className="absolute bottom-4 right-4">

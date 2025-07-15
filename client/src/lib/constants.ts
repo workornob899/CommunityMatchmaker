@@ -38,11 +38,15 @@ export const QUALIFICATION_OPTIONS = [
   "PhD",
   "Diploma",
   "Certificate",
-  "MBA",
-  "Engineering Degree",
-  "Medical Degree",
-  "Law Degree",
-  "Other",
+  "Other"
+];
+
+export const MARITAL_STATUS_OPTIONS = [
+  "Single",
+  "Divorced",
+  "Widowed",
+  "Separated",
+  "Other"
 ];
 
 export const HEIGHT_OPTIONS = [
@@ -100,23 +104,70 @@ export const fetchCustomOptions = async (fieldType: string) => {
 };
 
 // Function to get combined options (default + custom)
-export const getCombinedOptions = async (fieldType: string) => {
-  const customOptions = await fetchCustomOptions(fieldType);
-  
-  switch (fieldType) {
-    case 'profession':
-      return [...PROFESSION_OPTIONS, ...customOptions];
-    case 'qualification':
-      return [...QUALIFICATION_OPTIONS, ...customOptions];
-    case 'height':
-      return [...HEIGHT_OPTIONS, ...customOptions];
-    case 'gender':
-      return [GENDERS.MALE, GENDERS.FEMALE, ...customOptions];
-    case 'age':
-      return [...AGE_OPTIONS, ...customOptions];
-    case 'birthYear':
-      return [...BIRTH_YEAR_OPTIONS, ...customOptions];
-    default:
-      return customOptions;
+export async function getCombinedOptions(fieldType: string): Promise<string[]> {
+  try {
+    const response = await fetch(`/api/custom-options/${fieldType}`, {
+      credentials: "include",
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch custom options: ${response.status}`);
+    }
+
+    const customOptions = await response.json();
+    const customValues = customOptions.map((option: any) => option.value);
+
+    let defaultOptions: string[] = [];
+    switch (fieldType) {
+      case 'profession':
+        defaultOptions = PROFESSION_OPTIONS;
+        break;
+      case 'qualification':
+        defaultOptions = QUALIFICATION_OPTIONS;
+        break;
+      case 'maritalStatus':
+        defaultOptions = MARITAL_STATUS_OPTIONS;
+        break;
+      case 'height':
+        defaultOptions = HEIGHT_OPTIONS;
+        break;
+      case 'gender':
+        defaultOptions = [GENDERS.MALE, GENDERS.FEMALE];
+        break;
+      case 'age':
+        defaultOptions = AGE_OPTIONS;
+        break;
+      case 'birthYear':
+        defaultOptions = BIRTH_YEAR_OPTIONS;
+        break;
+      default:
+        defaultOptions = [];
+    }
+
+    // Combine and deduplicate
+    const combined = [...defaultOptions, ...customValues];
+    return [...new Set(combined)];
+  } catch (error) {
+    console.error(`Error fetching combined options for ${fieldType}:`, error);
+
+    // Return default options as fallback
+    switch (fieldType) {
+      case 'profession':
+        return PROFESSION_OPTIONS;
+      case 'qualification':
+        return QUALIFICATION_OPTIONS;
+      case 'maritalStatus':
+        return MARITAL_STATUS_OPTIONS;
+      case 'height':
+        return HEIGHT_OPTIONS;
+      case 'gender':
+        return [GENDERS.MALE, GENDERS.FEMALE];
+      case 'age':
+        return AGE_OPTIONS;
+      case 'birthYear':
+        return BIRTH_YEAR_OPTIONS;
+      default:
+        return [];
+    }
   }
-};
+}

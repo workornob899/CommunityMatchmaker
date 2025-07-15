@@ -205,6 +205,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const filters = {
         gender: req.query.gender as string,
         profession: req.query.profession as string,
+        maritalStatus: req.query.maritalStatus as string,
         birthYear: req.query.birthYear ? parseInt(req.query.birthYear as string) : undefined,
         height: req.query.height as string,
         age: req.query.age ? parseInt(req.query.age as string) : undefined,

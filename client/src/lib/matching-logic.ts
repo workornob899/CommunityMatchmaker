@@ -6,6 +6,7 @@ export interface MatchingCriteria {
   gender: string;
   profession?: string;
   maritalStatus?: string;
+  religion?: string;
   height: string;
 }
 
@@ -73,6 +74,11 @@ export function calculateCompatibilityScore(
   matchedProfile: Profile
 ): number {
   let score = 85; // Base score
+
+  // Religion compatibility (+5 points for same religion)
+  if (inputCriteria.religion && matchedProfile.religion && inputCriteria.religion === matchedProfile.religion) {
+    score += 5;
+  }
 
   // Add points for profession compatibility (if groom has profession)
   if (inputCriteria.profession && matchedProfile.profession) {

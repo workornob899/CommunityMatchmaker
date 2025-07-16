@@ -92,8 +92,8 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
               </div>
             </div>
 
-            {/* Second Row: Qualification, Marital Status, Height */}
-            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600">
+            {/* Second Row: Qualification, Marital Status, Religion */}
+            <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 mb-3">
               <div className="flex flex-col items-center text-center">
                 <Briefcase className="w-4 h-4 mb-1 text-gray-500" />
                 <span className="font-medium truncate">{profile.qualification || "N/A"}</span>
@@ -104,6 +104,14 @@ export function ProfileCard({ profile, onDownload, onClick }: ProfileCardProps) 
                 <span className="font-medium truncate">{profile.maritalStatus || "N/A"}</span>
               </div>
               
+              <div className="flex flex-col items-center text-center">
+                <UserCheck className="w-4 h-4 mb-1 text-gray-500" />
+                <span className="font-medium truncate">{profile.religion || "N/A"}</span>
+              </div>
+            </div>
+
+            {/* Third Row: Height */}
+            <div className="grid grid-cols-1 gap-2 text-xs text-gray-600">
               <div className="flex flex-col items-center text-center">
                 <Ruler className="w-4 h-4 mb-1 text-gray-500" />
                 <span className="font-medium truncate">{profile.height}</span>

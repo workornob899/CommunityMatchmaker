@@ -200,6 +200,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         birthYear: req.query.birthYear ? parseInt(req.query.birthYear as string) : undefined,
         height: req.query.height as string,
         age: req.query.age ? parseInt(req.query.age as string) : undefined,
+        maritalStatus: req.query.maritalStatus as string,
+        religion: req.query.religion as string,
         date: req.query.date as string,
       };
 
@@ -226,6 +228,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gender: req.body.gender,
         profession: req.body.profession || null,
         qualification: req.body.qualification || null,
+        maritalStatus: req.body.maritalStatus || null,
+        religion: req.body.religion || null,
         height: req.body.height,
         birthYear: parseInt(req.body.birthYear),
         profilePicture: null as string | null,
@@ -301,6 +305,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         gender: req.body.gender,
         profession: req.body.profession || null,
         qualification: req.body.qualification || null,
+        maritalStatus: req.body.maritalStatus || null,
+        religion: req.body.religion || null,
         height: req.body.height,
         birthYear: parseInt(req.body.birthYear),
         profilePicture: null as string | null,

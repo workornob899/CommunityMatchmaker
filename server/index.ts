@@ -1,6 +1,21 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { config } from "dotenv";
+
+// Load environment variables
+config();
+
+// Set Cloudinary environment variables if not already set
+if (!process.env.CLOUDINARY_CLOUD_NAME) {
+  process.env.CLOUDINARY_CLOUD_NAME = "df2fkc7qv";
+}
+if (!process.env.CLOUDINARY_API_KEY) {
+  process.env.CLOUDINARY_API_KEY = "228883882389618";
+}
+if (!process.env.CLOUDINARY_API_SECRET) {
+  process.env.CLOUDINARY_API_SECRET = "j59xsUqHTO0Sfz5Q7E_u6pJ7RSc";
+}
 
 const app = express();
 app.use(express.json());

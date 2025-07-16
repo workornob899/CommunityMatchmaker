@@ -6,11 +6,12 @@ import * as schema from "@shared/schema";
 // Configure Neon for serverless WebSocket support
 neonConfig.webSocketConstructor = ws;
 
-// Production-grade database URL validation
+// Production-grade database URL validation - blocks app startup if invalid
 if (!process.env.DATABASE_URL) {
-  throw new Error(
-    "DATABASE_URL must be set. Did you forget to provision a database?",
-  );
+  console.error("❌ FATAL: DATABASE_URL environment variable is not set");
+  console.error("This application requires a PostgreSQL database connection");
+  console.error("Please set DATABASE_URL before starting the application");
+  process.exit(1);
 }
 
 // Validate DATABASE_URL format for Neon

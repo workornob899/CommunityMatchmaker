@@ -1,24 +1,39 @@
 import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
-import { storage } from "./storage";
+import { storage as dbStorage } from "./storage";
 import { insertUserSchema, insertProfileSchema, insertMatchSchema, insertCustomOptionSchema } from "@shared/schema";
 import { testConnection } from "./db";
 import bcrypt from "bcrypt";
 import session from "express-session";
 import MemoryStore from "memorystore";
 import multer from "multer";
+import { v2 as cloudinary } from 'cloudinary';
+import { CloudinaryStorage } from 'multer-storage-cloudinary';
 import path from "path";
 import fs from "fs";
 
-// Configure multer for file uploads
-const uploadDir = path.join(process.cwd(), 'uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+// Configure Cloudinary with fallback values
+const cloudinaryConfig = {
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || "df2fkc7qv",
+  api_key: process.env.CLOUDINARY_API_KEY || "228883882389618",
+  api_secret: process.env.CLOUDINARY_API_SECRET || "j59xsUqHTO0Sfz5Q7E_u6pJ7RSc",
+};
+
+cloudinary.config(cloudinaryConfig);
+
+// Configure Cloudinary storage for multer
+const cloudinaryStorage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: 'ghotokbari',
+    allowed_formats: ['jpg', 'jpeg', 'png', 'pdf', 'doc', 'docx'],
+    resource_type: 'auto',
+  } as any,
+});
 
 const upload = multer({
-  dest: uploadDir,
+  storage: cloudinaryStorage,
   limits: {
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
@@ -68,9 +83,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     },
   }));
 
-  // Serve uploaded files
-  app.use('/uploads', express.static(uploadDir));
-
   // Authentication middleware
   const requireAuth = (req: any, res: any, next: any) => {
     if (!req.session.userId) {
@@ -79,49 +91,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   };
 
-  // Document download endpoint with proper filename
+  // Document download endpoint for Cloudinary URLs
   app.get('/api/profiles/:id/download-document', requireAuth, async (req, res) => {
     try {
       const profileId = parseInt(req.params.id);
-      console.log(`Download request for profile ID: ${profileId}`);
       
-      const profile = await storage.getProfile(profileId);
+      const profile = await dbStorage.getProfile(profileId);
       
       if (!profile) {
-        console.log(`Profile not found: ${profileId}`);
         return res.status(404).json({ message: 'Profile not found' });
       }
       
       if (!profile.document) {
-        console.log(`No document found for profile: ${profileId}`);
         return res.status(404).json({ message: 'No document found for this profile' });
       }
       
-      // Get the file path (remove /uploads prefix)
-      const fileName = profile.document.replace('/uploads/', '');
-      const filePath = path.join(uploadDir, fileName);
-      
-      console.log(`Looking for file at: ${filePath}`);
-      console.log(`Original document name: ${profile.documentOriginal}`);
-      
-      // Check if file exists
-      if (!fs.existsSync(filePath)) {
-        console.log(`File does not exist: ${filePath}`);
-        return res.status(404).json({ message: 'Document file not found' });
-      }
-      
-      // Set the proper filename for download
+      // For Cloudinary URLs, redirect to the direct download link
       const originalName = profile.documentOriginal || `document_${profile.id}`;
-      console.log(`Setting download filename to: ${originalName}`);
       
-      res.setHeader('Content-Disposition', `attachment; filename="${originalName}"`);
-      res.setHeader('Content-Type', 'application/octet-stream');
+      // Create a download URL with attachment disposition
+      const downloadUrl = profile.document.replace('/upload/', '/upload/fl_attachment/');
       
-      // Stream the file
-      const fileStream = fs.createReadStream(filePath);
-      fileStream.pipe(res);
-      
-      console.log(`File download started for: ${originalName}`);
+      res.redirect(downloadUrl);
       
     } catch (error) {
       console.error('Document download error:', error);
@@ -139,12 +130,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (username === 'admin12345' && password === 'admin12345') {
         console.log('Admin credentials valid, looking for user...');
         // Create or get admin user
-        let user = await storage.getUserByUsername(username);
+        let user = await dbStorage.getUserByUsername(username);
         console.log('Found user:', user ? 'Yes' : 'No');
         if (!user) {
           console.log('Creating new admin user...');
           const hashedPassword = await bcrypt.hash(password, 10);
-          user = await storage.createUser({
+          user = await dbStorage.createUser({
             username,
             password: hashedPassword,
             email: 'admin12345',
@@ -180,7 +171,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const user = await storage.getUser(req.session.userId);
+      const user = await dbStorage.getUser(req.session.userId);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -194,7 +185,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Profile routes
   app.get('/api/profiles', requireAuth, async (req, res) => {
     try {
-      const profiles = await storage.getAllProfiles();
+      const profiles = await dbStorage.getAllProfiles();
       res.json(profiles);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch profiles' });
@@ -217,7 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         filters[key as keyof typeof filters] === undefined && delete filters[key as keyof typeof filters]
       );
 
-      const profiles = await storage.searchProfiles(filters);
+      const profiles = await dbStorage.searchProfiles(filters);
       res.json(profiles);
     } catch (error) {
       res.status(500).json({ message: 'Failed to search profiles' });
@@ -243,21 +234,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentOriginal: null as string | null,
       };
 
-      // Handle file uploads
+      // Handle file uploads - now using Cloudinary URLs
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
       if (files.profilePicture && files.profilePicture[0]) {
-        profileData.profilePicture = `/uploads/${files.profilePicture[0].filename}`;
+        profileData.profilePicture = (files.profilePicture[0] as any).path; // Cloudinary URL
         profileData.profilePictureOriginal = files.profilePicture[0].originalname;
       }
       
       if (files.document && files.document[0]) {
-        profileData.document = `/uploads/${files.document[0].filename}`;
+        profileData.document = (files.document[0] as any).path; // Cloudinary URL
         profileData.documentOriginal = files.document[0].originalname;
       }
 
       const validatedData = insertProfileSchema.parse(profileData);
-      const profile = await storage.createProfile(validatedData);
+      const profile = await dbStorage.createProfile(validatedData);
       
       res.status(201).json(profile);
     } catch (error) {
@@ -268,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/profiles/stats', requireAuth, async (req, res) => {
     try {
-      const stats = await storage.getProfileStats();
+      const stats = await dbStorage.getProfileStats();
       res.json(stats);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch profile statistics' });
@@ -318,20 +309,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentOriginal: null as string | null,
       };
 
-      // Handle file uploads
+      // Handle file uploads - now using Cloudinary URLs
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
       
       if (files.profilePicture && files.profilePicture[0]) {
-        profileData.profilePicture = `/uploads/${files.profilePicture[0].filename}`;
+        profileData.profilePicture = (files.profilePicture[0] as any).path; // Cloudinary URL
         profileData.profilePictureOriginal = files.profilePicture[0].originalname;
       }
       
       if (files.document && files.document[0]) {
-        profileData.document = `/uploads/${files.document[0].filename}`;
+        profileData.document = (files.document[0] as any).path; // Cloudinary URL
         profileData.documentOriginal = files.document[0].originalname;
       }
 
-      const updatedProfile = await storage.updateProfile(profileId, profileData);
+      const updatedProfile = await dbStorage.updateProfile(profileId, profileData);
       
       if (!updatedProfile) {
         return res.status(404).json({ message: 'Profile not found' });
@@ -348,7 +339,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/profiles/:id', requireAuth, async (req, res) => {
     try {
       const profileId = parseInt(req.params.id);
-      const success = await storage.deleteProfile(profileId);
+      const success = await dbStorage.deleteProfile(profileId);
       
       if (!success) {
         return res.status(404).json({ message: 'Profile not found' });
@@ -388,7 +379,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Find opposite gender profiles
       const oppositeGender = gender === 'Male' ? 'Female' : 'Male';
-      const candidateProfiles = await storage.getProfilesByGender(oppositeGender);
+      const candidateProfiles = await dbStorage.getProfilesByGender(oppositeGender);
       
       // Apply exact matching logic
       const compatibleProfiles = candidateProfiles.filter(profile => {
@@ -464,7 +455,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put('/api/user/email', requireAuth, async (req, res) => {
     try {
       const { email } = req.body;
-      const user = await storage.updateUserEmail(req.session.userId!, email);
+      const user = await dbStorage.updateUserEmail(req.session.userId!, email);
       
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
@@ -480,7 +471,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { currentPassword, newPassword } = req.body;
       
-      const user = await storage.getUser(req.session.userId!);
+      const user = await dbStorage.getUser(req.session.userId!);
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
@@ -488,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // For admin user, allow password change without verification
       if (user.username === 'admin12345') {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
-        const updatedUser = await storage.updateUserPassword(user.id, hashedPassword);
+        const updatedUser = await dbStorage.updateUserPassword(user.id, hashedPassword);
         
         if (!updatedUser) {
           return res.status(500).json({ message: 'Failed to update password' });
@@ -507,7 +498,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/custom-options/:fieldType', requireAuth, async (req, res) => {
     try {
       const { fieldType } = req.params;
-      const options = await storage.getCustomOptions(fieldType);
+      const options = await dbStorage.getCustomOptions(fieldType);
       res.json(options);
     } catch (error) {
       res.status(500).json({ message: 'Failed to fetch custom options' });
@@ -517,7 +508,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/custom-options', requireAuth, async (req, res) => {
     try {
       const validatedData = insertCustomOptionSchema.parse(req.body);
-      const option = await storage.createCustomOption(validatedData);
+      const option = await dbStorage.createCustomOption(validatedData);
       res.status(201).json(option);
     } catch (error) {
       console.error('Custom option creation error:', error);
@@ -528,7 +519,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.delete('/api/custom-options/:id', requireAuth, async (req, res) => {
     try {
       const { id } = req.params;
-      const deleted = await storage.deleteCustomOption(parseInt(id));
+      const deleted = await dbStorage.deleteCustomOption(parseInt(id));
       if (deleted) {
         res.json({ message: 'Custom option deleted successfully' });
       } else {
